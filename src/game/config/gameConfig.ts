@@ -1,6 +1,7 @@
-import { AUTO, Scale, Types } from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH } from './gameplay';
-import { Game } from '../scenes/Game';
+import { AUTO, Scale, Types } from 'phaser'
+import { Game } from '../scenes/Game'
+import { StartScene } from '../scenes/StartScene'
+import { GAME_HEIGHT, GAME_WIDTH } from './gameplay'
 
 export const createGameConfig = (parent: string): Types.Core.GameConfig => ({
     type: AUTO,
@@ -16,6 +17,7 @@ export const createGameConfig = (parent: string): Types.Core.GameConfig => ({
         target: 60
     },
     scene: [
+        StartScene,
         Game
     ]
 });
