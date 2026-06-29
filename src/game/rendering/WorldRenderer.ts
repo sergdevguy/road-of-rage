@@ -12,6 +12,7 @@ export class WorldRenderer {
     private readonly graphics: Phaser.GameObjects.Graphics;
     private readonly scenery: Scenery[];
     private scroll = 0;
+    private readonly wrapWidth = GAME_WIDTH + 180;
 
     constructor(scene: Scene) {
         this.graphics = scene.add.graphics();
@@ -21,7 +22,7 @@ export class WorldRenderer {
     }
 
     update(deltaSeconds: number) {
-        this.scroll = (this.scroll + WORLD.scrollSpeed * deltaSeconds) % 220;
+        this.scroll = (this.scroll + WORLD.scrollSpeed * deltaSeconds) % this.wrapWidth;
         this.draw();
     }
 
@@ -44,14 +45,14 @@ export class WorldRenderer {
     private drawGroundTexture(g: Phaser.GameObjects.Graphics) {
         g.lineStyle(1, 0x5a4a34, 0.22);
 
-        for (let x = -40 - this.scroll; x < GAME_WIDTH + 80; x += 82) {
+        for (let x = -40 - (this.scroll % 82); x < GAME_WIDTH + 80; x += 82) {
             g.lineBetween(x, 160, x + 38, 138);
             g.lineBetween(x + 42, 612, x + 74, 584);
         }
 
         g.fillStyle(0x211d16, 0.22);
 
-        for (let x = -90 - this.scroll * 0.7; x < GAME_WIDTH + 100; x += 118) {
+        for (let x = -90 - (this.scroll % 118); x < GAME_WIDTH + 100; x += 118) {
             g.fillCircle(x, 250 + Math.sin(x) * 18, 3);
             g.fillCircle(x + 46, 650 + Math.cos(x) * 16, 4);
             g.fillCircle(x + 84, 340 + Math.sin(x * 0.4) * 28, 2);
@@ -60,7 +61,7 @@ export class WorldRenderer {
 
     private drawScenery(g: Phaser.GameObjects.Graphics) {
         for (const item of this.scenery) {
-            const x = this.wrapX(item.x - this.scroll * (item.kind === 'rock' ? 0.45 : 0.7));
+            const x = this.wrapX(item.x - this.scroll);
 
             if (Math.abs(item.y - WORLD.roadY) < WORLD.roadHeight * 0.75) {
                 continue;
@@ -91,7 +92,7 @@ export class WorldRenderer {
 
         g.lineStyle(4, 0xb7ad92, 0.36);
 
-        for (let x = -100 - this.scroll * 1.5; x < GAME_WIDTH + 100; x += 118) {
+        for (let x = -100 - (this.scroll % 118); x < GAME_WIDTH + 100; x += 118) {
             g.lineBetween(x, WORLD.roadY, x + 48, WORLD.roadY);
         }
     }
@@ -132,8 +133,7 @@ export class WorldRenderer {
     }
 
     private wrapX(x: number) {
-        const width = GAME_WIDTH + 180;
-        return ((x + 90) % width + width) % width - 90;
+        return ((x + 90) % this.wrapWidth + this.wrapWidth) % this.wrapWidth - 90;
     }
 
     private createScenery(): Scenery[] {
@@ -144,11 +144,15 @@ export class WorldRenderer {
             { x: 545, y: 170, size: 66, kind: 'tree' },
             { x: 815, y: 245, size: 48, kind: 'tree' },
             { x: 960, y: 178, size: 24, kind: 'scrub' },
+            { x: 1125, y: 206, size: 54, kind: 'tree' },
+            { x: 1240, y: 150, size: 30, kind: 'rock' },
             { x: 130, y: 650, size: 62, kind: 'tree' },
             { x: 300, y: 610, size: 24, kind: 'rock' },
             { x: 585, y: 690, size: 68, kind: 'tree' },
             { x: 760, y: 590, size: 18, kind: 'scrub' },
-            { x: 905, y: 640, size: 58, kind: 'tree' }
+            { x: 905, y: 640, size: 58, kind: 'tree' },
+            { x: 1110, y: 620, size: 24, kind: 'scrub' },
+            { x: 1220, y: 670, size: 56, kind: 'tree' }
         ];
     }
 }

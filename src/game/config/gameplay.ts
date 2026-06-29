@@ -1,8 +1,8 @@
-export const GAME_WIDTH = 1024;
-export const GAME_HEIGHT = 768;
+export const GAME_WIDTH = 1280;
+export const GAME_HEIGHT = 720;
 
 export const WORLD = {
-    roadY: 430,
+    roadY: 410,
     roadHeight: 110,
     scrollSpeed: 86
 };
