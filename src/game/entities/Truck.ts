@@ -11,6 +11,7 @@ export class Truck {
         this.scene = scene;
         this.container = scene.add.container(TRUCK.x, TRUCK.y);
         this.container.setDepth(20);
+        this.container.setScale(TRUCK.scale);
 
         this.addShadow();
         this.addBody();

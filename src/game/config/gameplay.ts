@@ -9,9 +9,14 @@ export const WORLD = {
 
 export const TRUCK = {
     x: 450,
-    y: WORLD.roadY + 12,
+    y: WORLD.roadY,
+    scale: 0.8,
     maxHp: 18,
-    collisionRadius: 76
+    collisionRadius: 61
+};
+
+export const DRONE = {
+    scale: 0.8
 };
 
 export const COMBAT = {

@@ -22,7 +22,7 @@ export class WorldRenderer {
     }
 
     update(deltaSeconds: number) {
-        this.scroll = (this.scroll + WORLD.scrollSpeed * deltaSeconds) % this.wrapWidth;
+        this.scroll += WORLD.scrollSpeed * deltaSeconds;
         this.draw();
     }
 
@@ -39,7 +39,6 @@ export class WorldRenderer {
         this.drawGroundTexture(g);
         this.drawScenery(g);
         this.drawRoad(g);
-        this.drawVignette(g);
     }
 
     private drawGroundTexture(g: Phaser.GameObjects.Graphics) {
@@ -95,11 +94,6 @@ export class WorldRenderer {
         for (let x = -100 - (this.scroll % 118); x < GAME_WIDTH + 100; x += 118) {
             g.lineBetween(x, WORLD.roadY, x + 48, WORLD.roadY);
         }
-    }
-
-    private drawVignette(g: Phaser.GameObjects.Graphics) {
-        g.lineStyle(48, 0x040704, 0.2);
-        g.strokeRect(20, 20, GAME_WIDTH - 40, GAME_HEIGHT - 40);
     }
 
     private drawTree(g: Phaser.GameObjects.Graphics, x: number, y: number, size: number) {

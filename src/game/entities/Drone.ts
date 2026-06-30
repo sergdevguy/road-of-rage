@@ -1,5 +1,5 @@
 import type { Scene } from 'phaser';
-import { COLORS, COMBAT } from '../config/gameplay';
+import { COLORS, COMBAT, DRONE } from '../config/gameplay';
 import type { Point } from '../types';
 import { angleBetween, distanceSquared, pointOnCircle } from '../utils/math';
 import { Enemy } from './Enemy';
@@ -24,6 +24,7 @@ export class Drone {
         this.orbitSpeed = 1.4 + Math.random() * 0.35;
         this.container = scene.add.container(truck.x, truck.y);
         this.container.setDepth(30);
+        this.container.setScale(DRONE.scale);
 
         const shadow = scene.add.ellipse(0, 15, 36, 14, 0x000000, 0.24);
         const body = scene.add.circle(0, 0, 14, 0x354026);
