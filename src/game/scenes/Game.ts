@@ -153,7 +153,7 @@ export class Game extends Scene {
                 }
 
                 if (enemy.takeDamage(projectile.damage)) {
-                    this.gold += projectile.owner === 'drone' ? 2 : 3;
+                    this.gold += enemy.reward;
                     this.handleEnemyRemoved(enemy, false);
                 }
 

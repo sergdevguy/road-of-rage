@@ -11,7 +11,7 @@ export const TRUCK = {
     x: GAME_WIDTH / 2,
     y: WORLD.roadY,
     scale: 0.8,
-    maxHp: 10,
+    maxHp: 1000,
     collisionRadius: 61
 };
 
@@ -30,11 +30,7 @@ export const COMBAT = {
 };
 
 export const ENEMY = {
-    baseHp: 4,
-    baseSpeed: 58,
-    spawnDelay: 1050,
     attackDelay: 720,
-    attackDamage: 1,
     collisionRadius: 24
 };
 

@@ -1,9 +1,11 @@
 import type { Scene } from 'phaser';
+import { ENEMY_DEFINITIONS, type EnemyType } from '../config/enemies';
 import { GAME_HEIGHT, GAME_WIDTH } from '../config/gameplay';
 import { Enemy } from '../entities/Enemy';
-import type { EnemyKind, Point, SpawnSide } from '../types';
+import type { Point, SpawnSide } from '../types';
 
 type SpawnEnemyOptions = {
+    type: EnemyType;
     hpMultiplier: number;
 };
 
@@ -15,24 +17,31 @@ export class EnemySpawner {
     }
 
     spawnEnemy(options: SpawnEnemyOptions) {
-        const side = this.pickSpawnSide();
+        const definition = ENEMY_DEFINITIONS[options.type];
+        const side = this.pickSpawnSide(options.type);
         const position = this.spawnPosition(side);
-        const kind = this.pickEnemyKind(side);
 
-        return new Enemy(this.scene, kind, position, options.hpMultiplier, side);
+        return new Enemy(this.scene, {
+            type: definition.type,
+            position,
+            spawnSide: side,
+            maxHp: Math.ceil(definition.maxHp * options.hpMultiplier),
+            speed: definition.speed,
+            damage: definition.damage,
+            reward: definition.reward
+        });
     }
 
-    private pickEnemyKind(side: SpawnSide): EnemyKind {
-        if (side === 'left' || side === 'right') {
-            return Math.random() < 0.5 ? 'car' : 'raider';
+    private pickSpawnSide(type: EnemyType): SpawnSide {
+        if (type === 'fastCar') {
+            return 'left';
         }
 
-        return Math.random() < 0.5 ? 'scoutDrone' : 'strikeDrone';
-    }
+        if (type === 'armoredCar') {
+            return 'right';
+        }
 
-    private pickSpawnSide(): SpawnSide {
-        const sides: SpawnSide[] = ['left', 'right', 'top', 'bottom'];
-        return sides[Math.floor(Math.random() * sides.length)];
+        return Math.random() < 0.5 ? 'top' : 'bottom';
     }
 
     private spawnPosition(side: SpawnSide): Point {

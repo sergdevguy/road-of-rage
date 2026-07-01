@@ -1,7 +1,18 @@
 import type { Scene } from 'phaser';
+import type { EnemyType } from '../config/enemies';
 import { COLORS, ENEMY, TRUCK } from '../config/gameplay';
-import type { EnemyKind, Point, SpawnSide } from '../types';
+import type { Point, SpawnSide } from '../types';
 import { angleBetween, distanceSquared } from '../utils/math';
+
+type EnemyOptions = {
+    type: EnemyType;
+    position: Point;
+    spawnSide: SpawnSide;
+    maxHp: number;
+    speed: number;
+    damage: number;
+    reward: number;
+};
 
 export class Enemy {
     readonly radius = ENEMY.collisionRadius;
@@ -10,34 +21,36 @@ export class Enemy {
     private readonly container: Phaser.GameObjects.Container;
     private readonly visual: Phaser.GameObjects.Container;
     private readonly healthFill: Phaser.GameObjects.Rectangle;
-    private readonly kind: EnemyKind;
+    private readonly enemyType: EnemyType;
     private readonly spawnSide: SpawnSide;
     private readonly maxHp: number;
     private readonly speed: number;
+    private readonly damage: number;
+    private readonly rewardValue: number;
     private hp: number;
     private attackCooldownMs = 0;
     private destroyed = false;
 
-    constructor(scene: Scene, kind: EnemyKind, position: Point, hpMultiplier: number, spawnSide: SpawnSide) {
+    constructor(scene: Scene, options: EnemyOptions) {
         this.scene = scene;
-        this.kind = kind;
-        this.spawnSide = spawnSide;
-        this.hp = Math.ceil(ENEMY.baseHp * hpMultiplier);
-        this.maxHp = this.hp;
-        this.speed = ENEMY.baseSpeed + (this.isSideViewEnemy() ? 26 : 10);
-        this.container = scene.add.container(position.x, position.y);
+        this.enemyType = options.type;
+        this.spawnSide = options.spawnSide;
+        this.hp = options.maxHp;
+        this.maxHp = options.maxHp;
+        this.speed = options.speed;
+        this.damage = options.damage;
+        this.rewardValue = options.reward;
+        this.container = scene.add.container(options.position.x, options.position.y);
         this.container.setDepth(15);
         this.visual = scene.add.container(0, 0);
         this.container.add(this.visual);
 
-        if (kind === 'car') {
-            this.addCarVisual();
-        } else if (kind === 'raider') {
-            this.addRaiderVisual();
-        } else if (kind === 'scoutDrone') {
-            this.addScoutDroneVisual();
+        if (options.type === 'fastCar') {
+            this.addFastCarVisual();
+        } else if (options.type === 'armoredCar') {
+            this.addArmoredCarVisual();
         } else {
-            this.addStrikeDroneVisual();
+            this.addDroneVisual();
         }
 
         this.faceInitialDirection();
@@ -58,6 +71,10 @@ export class Enemy {
 
     get position(): Point {
         return { x: this.x, y: this.y };
+    }
+
+    get reward() {
+        return this.rewardValue;
     }
 
     update(deltaSeconds: number, target: Point) {
@@ -83,7 +100,7 @@ export class Enemy {
         if (this.attackCooldownMs <= 0) {
             this.attackCooldownMs = ENEMY.attackDelay;
             this.scene.cameras.main.shake(70, 0.0025);
-            return ENEMY.attackDamage;
+            return this.damage;
         }
 
         return 0;
@@ -123,76 +140,58 @@ export class Enemy {
         this.container.destroy();
     }
 
-    private addCarVisual() {
-        const shadow = this.scene.add.ellipse(2, 10, 58, 26, 0x000000, 0.32);
-        const body = this.scene.add.rectangle(0, 0, 54, 28, COLORS.enemy);
+    private addFastCarVisual() {
+        const shadow = this.scene.add.ellipse(2, 9, 46, 20, 0x000000, 0.3);
+        const body = this.scene.add.rectangle(0, 0, 42, 22, COLORS.enemy);
         body.setStrokeStyle(3, COLORS.enemyDark);
 
-        const hood = this.scene.add.rectangle(16, 0, 18, 24, 0xa92c25);
-        const glass = this.scene.add.rectangle(-10, -1, 18, 18, 0x252d31, 0.95);
-        const wheelA = this.scene.add.circle(-15, 16, 5, 0x101010);
-        const wheelB = this.scene.add.circle(15, 16, 5, 0x101010);
-        const light = this.scene.add.circle(27, -7, 3, 0xffd88a);
+        const hood = this.scene.add.rectangle(13, 0, 14, 18, 0xf15b42);
+        const glass = this.scene.add.rectangle(-8, -1, 14, 14, 0x252d31, 0.95);
+        const stripe = this.scene.add.rectangle(-3, -8, 28, 3, 0xffc15f, 0.92);
+        const wheelA = this.scene.add.circle(-13, 13, 4, 0x101010);
+        const wheelB = this.scene.add.circle(13, 13, 4, 0x101010);
+        const light = this.scene.add.circle(21, -6, 3, 0xffd88a);
 
-        this.visual.add([shadow, body, hood, glass, wheelA, wheelB, light]);
+        this.visual.add([shadow, body, hood, glass, stripe, wheelA, wheelB, light]);
     }
 
-    private addRaiderVisual() {
-        const shadow = this.scene.add.ellipse(1, 11, 50, 28, 0x000000, 0.38);
-        const body = this.scene.add.rectangle(0, 0, 46, 30, 0x2e241d);
-        body.setStrokeStyle(3, 0x11100d);
+    private addArmoredCarVisual() {
+        const shadow = this.scene.add.ellipse(2, 13, 72, 32, 0x000000, 0.4);
+        const body = this.scene.add.rectangle(0, 0, 66, 34, 0x573c2d);
+        body.setStrokeStyle(4, 0x16120f);
 
-        const spikes = this.scene.add.polygon(12, 0, [
-            -14, -18,
-            20, 0,
-            -14, 18
-        ], COLORS.enemy);
-        spikes.setStrokeStyle(2, COLORS.enemyDark);
+        const armorPlate = this.scene.add.rectangle(-7, 0, 36, 24, 0x7b6a50);
+        armorPlate.setStrokeStyle(2, 0x2a2118);
 
-        const engine = this.scene.add.circle(-12, 0, 9, 0x813326);
-        const wheelA = this.scene.add.circle(-16, 17, 6, 0x101010);
-        const wheelB = this.scene.add.circle(14, 17, 6, 0x101010);
+        const ram = this.scene.add.triangle(34, 0, -8, -14, -8, 14, 10, 0, 0x8c2f24);
+        ram.setStrokeStyle(2, 0x2a100d);
 
-        this.visual.add([shadow, body, spikes, engine, wheelA, wheelB]);
+        const turret = this.scene.add.rectangle(-9, -19, 26, 5, 0x2b2924);
+        turret.setRotation(-0.24);
+
+        const wheelA = this.scene.add.circle(-22, 18, 6, 0x101010);
+        const wheelB = this.scene.add.circle(0, 18, 6, 0x101010);
+        const wheelC = this.scene.add.circle(22, 18, 6, 0x101010);
+        const light = this.scene.add.circle(34, -8, 3, 0xffd88a);
+
+        this.visual.add([shadow, body, armorPlate, ram, turret, wheelA, wheelB, wheelC, light]);
     }
 
-    private addScoutDroneVisual() {
-        const shadow = this.scene.add.ellipse(1, 12, 50, 18, 0x000000, 0.28);
-        const body = this.scene.add.circle(0, 0, 13, 0x293123);
+    private addDroneVisual() {
+        const shadow = this.scene.add.ellipse(1, 12, 48, 18, 0x000000, 0.28);
+        const body = this.scene.add.circle(0, 0, 12, 0x293123);
         body.setStrokeStyle(3, 0xa9c963);
 
-        const rotorA = this.scene.add.rectangle(0, 0, 58, 4, 0xd0d6bf, 0.82);
+        const rotorA = this.scene.add.rectangle(0, 0, 54, 4, 0xd0d6bf, 0.82);
         rotorA.setRotation(0.75);
 
-        const rotorB = this.scene.add.rectangle(0, 0, 58, 4, 0xd0d6bf, 0.82);
+        const rotorB = this.scene.add.rectangle(0, 0, 54, 4, 0xd0d6bf, 0.82);
         rotorB.setRotation(-0.75);
 
-        const nose = this.scene.add.triangle(18, 0, -8, -8, -8, 8, 10, 0, 0x9fc14d);
+        const nose = this.scene.add.triangle(17, 0, -8, -8, -8, 8, 10, 0, 0x9fc14d);
         nose.setStrokeStyle(2, 0x2c3519);
 
         this.visual.add([shadow, rotorA, rotorB, nose, body]);
-    }
-
-    private addStrikeDroneVisual() {
-        const shadow = this.scene.add.ellipse(1, 14, 58, 20, 0x000000, 0.3);
-        const body = this.scene.add.polygon(0, 0, [
-            -28, -9,
-            10, -20,
-            30, 0,
-            10, 20,
-            -28, 9
-        ], 0x6c7466);
-        body.setStrokeStyle(3, 0x22261f);
-
-        const cockpit = this.scene.add.circle(6, 0, 7, 0x252f31, 0.96);
-        cockpit.setStrokeStyle(2, 0xaeb8aa, 0.7);
-
-        const wingA = this.scene.add.triangle(-6, -12, -22, -3, 8, -34, 18, -7, 0x8b9383);
-        const wingB = this.scene.add.triangle(-6, 12, -22, 3, 8, 34, 18, 7, 0x8b9383);
-        wingA.setStrokeStyle(2, 0x22261f);
-        wingB.setStrokeStyle(2, 0x22261f);
-
-        this.visual.add([shadow, wingA, wingB, body, cockpit]);
     }
 
     private faceInitialDirection() {
@@ -212,6 +211,6 @@ export class Enemy {
     }
 
     private isSideViewEnemy() {
-        return this.kind === 'car' || this.kind === 'raider';
+        return this.enemyType !== 'drone';
     }
 }

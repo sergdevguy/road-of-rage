@@ -1,3 +1,5 @@
+import type { EnemyType } from '../config/enemies';
+
 export type WaveConfig = {
     enemyCount: number;
     spawnInterval: number;
@@ -11,6 +13,7 @@ export type WaveState =
     | 'betweenWaves';
 
 type SpawnOptions = {
+    type: EnemyType;
     hpMultiplier: number;
 };
 
@@ -135,6 +138,7 @@ export class WaveManager {
         this.enemiesLeftToSpawn -= 1;
         this.aliveEnemies += 1;
         this.options.spawnEnemy({
+            type: this.selectEnemyType(this.waveNumber),
             hpMultiplier: this.activeConfig.hpMultiplier
         });
 
@@ -173,5 +177,56 @@ export class WaveManager {
         this.isRunCompleted = true;
         this.stateValue = 'idle';
         this.options.onRunCompleted?.();
+    }
+
+    private selectEnemyType(waveNumber: number): EnemyType {
+        if (waveNumber <= 1) {
+            return this.pickWeightedEnemyType([
+                { type: 'fastCar', weight: 100 }
+            ]);
+        }
+
+        if (waveNumber === 2) {
+            return this.pickWeightedEnemyType([
+                { type: 'fastCar', weight: 75 },
+                { type: 'drone', weight: 25 }
+            ]);
+        }
+
+        if (waveNumber === 3) {
+            return this.pickWeightedEnemyType([
+                { type: 'fastCar', weight: 60 },
+                { type: 'armoredCar', weight: 40 }
+            ]);
+        }
+
+        if (waveNumber === 4) {
+            return this.pickWeightedEnemyType([
+                { type: 'fastCar', weight: 45 },
+                { type: 'armoredCar', weight: 30 },
+                { type: 'drone', weight: 25 }
+            ]);
+        }
+
+        return this.pickWeightedEnemyType([
+            { type: 'fastCar', weight: 30 },
+            { type: 'armoredCar', weight: 45 },
+            { type: 'drone', weight: 25 }
+        ]);
+    }
+
+    private pickWeightedEnemyType(weights: Array<{ type: EnemyType; weight: number }>) {
+        const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0);
+        let roll = Math.random() * totalWeight;
+
+        for (const item of weights) {
+            roll -= item.weight;
+
+            if (roll <= 0) {
+                return item.type;
+            }
+        }
+
+        return weights[weights.length - 1].type;
     }
 }
