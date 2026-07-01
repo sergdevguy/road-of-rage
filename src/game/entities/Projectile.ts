@@ -11,6 +11,7 @@ export class Projectile {
     private readonly vx: number;
     private readonly vy: number;
     private lifeMs = 900;
+    private destroyed = false;
 
     constructor(scene: Scene, position: Point, angle: number, damage: number, owner: ProjectileOwner) {
         this.owner = owner;
@@ -36,16 +37,26 @@ export class Projectile {
     }
 
     update(deltaSeconds: number) {
+        if (this.destroyed) {
+            return;
+        }
+
         this.body.x += this.vx * deltaSeconds;
         this.body.y += this.vy * deltaSeconds;
         this.lifeMs -= deltaSeconds * 1000;
     }
 
     isExpired() {
-        return this.lifeMs <= 0 || this.x < -80 || this.x > 1104 || this.y < -80 || this.y > 848;
+        return this.destroyed || this.lifeMs <= 0 || this.x < -80 || this.x > 1104 || this.y < -80 || this.y > 848;
     }
 
     destroy() {
+        if (this.destroyed) {
+            return;
+        }
+
+        this.destroyed = true;
+        this.lifeMs = 0;
         this.body.destroy();
     }
 }

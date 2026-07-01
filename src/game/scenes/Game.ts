@@ -1,12 +1,13 @@
 import { Scene } from 'phaser';
-import { ENEMY, GAME_HEIGHT, GAME_WIDTH, PLAYER, TRUCK, WAVES } from '../config/gameplay';
+import { GAME_HEIGHT, GAME_WIDTH, PLAYER, TRUCK, WAVES } from '../config/gameplay';
 import { Drone } from '../entities/Drone';
 import { Enemy } from '../entities/Enemy';
 import { Projectile } from '../entities/Projectile';
 import { Truck } from '../entities/Truck';
 import { Turret } from '../entities/Turret';
 import { WorldRenderer } from '../rendering/WorldRenderer';
-import type { EnemyKind, Point, SpawnSide } from '../types';
+import { EnemySpawner } from '../spawners/EnemySpawner';
+import { WaveManager } from '../systems/WaveManager';
 import { Hud } from '../ui/Hud';
 
 type GameSpeed = 1 | 2 | 3;
@@ -15,15 +16,16 @@ export class Game extends Scene {
     private world: WorldRenderer;
     private truck: Truck;
     private hud: Hud;
+    private enemySpawner: EnemySpawner;
+    private waveManager: WaveManager;
     private turrets: Turret[] = [];
     private drones: Drone[] = [];
     private enemies: Enemy[] = [];
     private projectiles: Projectile[] = [];
+    private removedEnemies = new WeakSet<Enemy>();
     private hp = TRUCK.maxHp;
     private gold = PLAYER.startGold;
     private wave = 1;
-    private spawnTimerMs = 0;
-    private elapsedMs = 0;
     private isGameOver = false;
     private isPaused = false;
     private speedMultiplier: GameSpeed = 1;
@@ -37,11 +39,10 @@ export class Game extends Scene {
         this.drones = [];
         this.enemies = [];
         this.projectiles = [];
+        this.removedEnemies = new WeakSet();
         this.hp = TRUCK.maxHp;
         this.gold = PLAYER.startGold;
         this.wave = 1;
-        this.spawnTimerMs = 0;
-        this.elapsedMs = 0;
         this.isGameOver = false;
         this.isPaused = false;
         this.speedMultiplier = 1;
@@ -61,9 +62,29 @@ export class Game extends Scene {
             new Drone(this, this.truck, 2.2, 210)
         ];
 
-        for (let index = 0; index < 5; index += 1) {
-            this.spawnEnemy();
-        }
+        this.enemySpawner = new EnemySpawner(this);
+        this.waveManager = new WaveManager({
+            maxWaves: WAVES.max,
+            spawnInterval: WAVES.spawnIntervalMs,
+            betweenWaveDelay: WAVES.betweenWaveDelayMs,
+            spawnEnemy: (options) => {
+                this.enemies.push(this.enemySpawner.spawnEnemy(options));
+            },
+            onWaveStarted: (waveNumber) => {
+                this.wave = waveNumber;
+                this.hud.showStatusMessage(`ВОЛНА ${waveNumber}`, 900);
+                this.refreshHud();
+            },
+            onWaveCompleted: () => {
+                this.hud.showStatusMessage('ВОЛНА ЗАВЕРШЕНА', 1200);
+            },
+            onRunCompleted: () => {
+                this.hud.showStatusMessage('ЗАБЕГ ЗАВЕРШЁН', 0);
+            }
+        });
+        this.waveManager.start();
+
+        this.events.once('shutdown', () => this.shutdownSystems());
 
         this.refreshHud();
     }
@@ -77,15 +98,8 @@ export class Game extends Scene {
         const deltaSeconds = Math.min(scaledDelta / 1000, 0.05);
 
         this.world.update(deltaSeconds);
-
-        this.elapsedMs += scaledDelta;
-        this.wave = Math.min(WAVES.max, 1 + Math.floor(this.elapsedMs / WAVES.waveDurationMs));
-        this.spawnTimerMs -= scaledDelta;
-
-        if (this.spawnTimerMs <= 0) {
-            this.spawnEnemy();
-            this.spawnTimerMs = Math.max(420, ENEMY.spawnDelay - this.wave * 38);
-        }
+        this.waveManager.update(scaledDelta);
+        this.hud.update(scaledDelta);
 
         this.updateEnemies(deltaSeconds);
         this.updateWeapons(deltaSeconds);
@@ -119,6 +133,7 @@ export class Game extends Scene {
             if (damage > 0) {
                 this.hp -= damage;
                 this.truck.setHp(this.hp);
+                this.handleEnemyRemoved(enemy, true);
 
                 if (this.hp <= 0) {
                     this.gameOver();
@@ -139,6 +154,7 @@ export class Game extends Scene {
 
                 if (enemy.takeDamage(projectile.damage)) {
                     this.gold += projectile.owner === 'drone' ? 2 : 3;
+                    this.handleEnemyRemoved(enemy, false);
                 }
 
                 projectile.destroy();
@@ -163,45 +179,18 @@ export class Game extends Scene {
         this.projectiles = activeProjectiles;
     }
 
-    private spawnEnemy() {
-        const side = this.pickSpawnSide();
-        const position = this.spawnPosition(side);
-        const kind = this.pickEnemyKind(side);
-
-        this.enemies.push(new Enemy(this, kind, position, this.wave, side));
-    }
-
-    private pickEnemyKind(side: SpawnSide): EnemyKind {
-        if (side === 'left' || side === 'right') {
-            return Math.random() < 0.5 ? 'car' : 'raider';
+    private handleEnemyRemoved(enemy: Enemy, shouldDestroy: boolean) {
+        if (this.removedEnemies.has(enemy)) {
+            return;
         }
 
-        return Math.random() < 0.5 ? 'scoutDrone' : 'strikeDrone';
-    }
+        this.removedEnemies.add(enemy);
 
-    private pickSpawnSide(): SpawnSide {
-        const sides: SpawnSide[] = ['left', 'right', 'top', 'bottom'];
-        return sides[Math.floor(Math.random() * sides.length)];
-    }
-
-    private spawnPosition(side: SpawnSide): Point {
-        if (side === 'left') {
-            return { x: -70, y: this.randomBetween(360, 520) };
+        if (shouldDestroy) {
+            enemy.destroy();
         }
 
-        if (side === 'right') {
-            return { x: GAME_WIDTH + 70, y: this.randomBetween(250, 610) };
-        }
-
-        if (side === 'top') {
-            return { x: this.randomBetween(80, GAME_WIDTH - 80), y: -70 };
-        }
-
-        return { x: this.randomBetween(80, GAME_WIDTH - 80), y: GAME_HEIGHT + 70 };
-    }
-
-    private randomBetween(min: number, max: number) {
-        return min + Math.random() * (max - min);
+        this.waveManager.onEnemyRemoved();
     }
 
     private refreshHud() {
@@ -255,5 +244,20 @@ export class Game extends Scene {
         });
         score.setOrigin(0.5);
         score.setDepth(201);
+    }
+
+    private shutdownSystems() {
+        this.waveManager?.destroy();
+
+        for (const enemy of this.enemies) {
+            enemy.destroy();
+        }
+
+        for (const projectile of this.projectiles) {
+            projectile.destroy();
+        }
+
+        this.enemies = [];
+        this.projectiles = [];
     }
 }

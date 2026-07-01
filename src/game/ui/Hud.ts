@@ -17,10 +17,12 @@ export class Hud {
     private readonly hpText: Phaser.GameObjects.Text;
     private readonly goldText: Phaser.GameObjects.Text;
     private readonly waveText: Phaser.GameObjects.Text;
+    private readonly statusText: Phaser.GameObjects.Text;
     private readonly pauseButton: HudButton;
     private readonly speedButton: HudButton;
     private readonly waveDots: Phaser.GameObjects.Arc[] = [];
     private readonly controlButtons: HudButton[] = [];
+    private statusTimerMs = 0;
     private isPaused = false;
 
     constructor(scene: Scene, callbacks: HudCallbacks) {
@@ -32,6 +34,7 @@ export class Hud {
         this.goldText = resourceTexts.goldText;
 
         this.waveText = this.createWavePanel();
+        this.statusText = this.createStatusText();
         const controlButtons = this.createControlButtons();
         this.pauseButton = controlButtons.pauseButton;
         this.speedButton = controlButtons.speedButton;
@@ -51,6 +54,24 @@ export class Hud {
             dot.setFillStyle(isComplete ? 0x65d65a : 0x2a2c29, 1);
             dot.setStrokeStyle(2, isComplete ? 0x143d17 : 0x070807, 1);
         });
+    }
+
+    showStatusMessage(message: string, durationMs = 1200) {
+        this.statusText.setText(message);
+        this.statusText.setVisible(true);
+        this.statusTimerMs = durationMs;
+    }
+
+    update(deltaMs: number) {
+        if (!this.statusText.visible || this.statusTimerMs <= 0) {
+            return;
+        }
+
+        this.statusTimerMs -= deltaMs;
+
+        if (this.statusTimerMs <= 0) {
+            this.statusText.setVisible(false);
+        }
     }
 
     setPaused(isPaused: boolean) {
@@ -138,6 +159,21 @@ export class Hud {
         }
 
         return waveText;
+    }
+
+    private createStatusText() {
+        const statusText = this.scene.add.text(GAME_WIDTH / 2, 108, '', {
+            fontFamily: 'Arial Black, Arial',
+            fontSize: '26px',
+            color: '#f4edcf',
+            stroke: '#050505',
+            strokeThickness: 5
+        });
+        statusText.setOrigin(0.5);
+        statusText.setDepth(103);
+        statusText.setVisible(false);
+
+        return statusText;
     }
 
     private createControlButtons() {

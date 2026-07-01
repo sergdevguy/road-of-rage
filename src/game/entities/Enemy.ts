@@ -18,13 +18,13 @@ export class Enemy {
     private attackCooldownMs = 0;
     private destroyed = false;
 
-    constructor(scene: Scene, kind: EnemyKind, position: Point, wave: number, spawnSide: SpawnSide) {
+    constructor(scene: Scene, kind: EnemyKind, position: Point, hpMultiplier: number, spawnSide: SpawnSide) {
         this.scene = scene;
         this.kind = kind;
         this.spawnSide = spawnSide;
-        this.hp = ENEMY.baseHp + Math.floor(wave * 0.75);
+        this.hp = Math.ceil(ENEMY.baseHp * hpMultiplier);
         this.maxHp = this.hp;
-        this.speed = ENEMY.baseSpeed + wave * 4 + (this.isSideViewEnemy() ? 26 : 10);
+        this.speed = ENEMY.baseSpeed + (this.isSideViewEnemy() ? 26 : 10);
         this.container = scene.add.container(position.x, position.y);
         this.container.setDepth(15);
         this.visual = scene.add.container(0, 0);
@@ -98,7 +98,6 @@ export class Enemy {
         this.healthFill.scaleX = Math.max(0, this.hp / this.maxHp);
 
         if (this.hp <= 0) {
-            this.destroyed = true;
             this.destroy();
             return true;
         }
@@ -116,6 +115,11 @@ export class Enemy {
     }
 
     destroy() {
+        if (this.destroyed) {
+            return;
+        }
+
+        this.destroyed = true;
         this.container.destroy();
     }
 
