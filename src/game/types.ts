@@ -5,6 +5,6 @@ export type Point = {
 
 export type ProjectileOwner = 'turret' | 'drone';
 
-export type EnemyKind = 'raider' | 'car';
+export type EnemyKind = 'raider' | 'car' | 'scoutDrone' | 'strikeDrone';
 
 export type SpawnSide = 'left' | 'right' | 'top' | 'bottom';

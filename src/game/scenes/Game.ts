@@ -156,9 +156,17 @@ export class Game extends Scene {
     private spawnEnemy() {
         const side = this.pickSpawnSide();
         const position = this.spawnPosition(side);
-        const kind: EnemyKind = side === 'left' || side === 'right' ? 'car' : 'raider';
+        const kind = this.pickEnemyKind(side);
 
-        this.enemies.push(new Enemy(this, kind, position, this.wave));
+        this.enemies.push(new Enemy(this, kind, position, this.wave, side));
+    }
+
+    private pickEnemyKind(side: SpawnSide): EnemyKind {
+        if (side === 'left' || side === 'right') {
+            return Math.random() < 0.5 ? 'car' : 'raider';
+        }
+
+        return Math.random() < 0.5 ? 'scoutDrone' : 'strikeDrone';
     }
 
     private pickSpawnSide(): SpawnSide {
