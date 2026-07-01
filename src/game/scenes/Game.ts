@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import { ENEMY, GAME_HEIGHT, GAME_WIDTH, TRUCK } from '../config/gameplay';
+import { ENEMY, GAME_HEIGHT, GAME_WIDTH, PLAYER, TRUCK, WAVES } from '../config/gameplay';
 import { Drone } from '../entities/Drone';
 import { Enemy } from '../entities/Enemy';
 import { Projectile } from '../entities/Projectile';
@@ -18,7 +18,7 @@ export class Game extends Scene {
     private enemies: Enemy[] = [];
     private projectiles: Projectile[] = [];
     private hp = TRUCK.maxHp;
-    private scrap = 110;
+    private gold = PLAYER.startGold;
     private wave = 1;
     private spawnTimerMs = 0;
     private elapsedMs = 0;
@@ -34,7 +34,7 @@ export class Game extends Scene {
         this.enemies = [];
         this.projectiles = [];
         this.hp = TRUCK.maxHp;
-        this.scrap = 110;
+        this.gold = PLAYER.startGold;
         this.wave = 1;
         this.spawnTimerMs = 0;
         this.elapsedMs = 0;
@@ -69,7 +69,7 @@ export class Game extends Scene {
         }
 
         this.elapsedMs += delta;
-        this.wave = 1 + Math.floor(this.elapsedMs / 18000);
+        this.wave = Math.min(WAVES.max, 1 + Math.floor(this.elapsedMs / WAVES.waveDurationMs));
         this.spawnTimerMs -= delta;
 
         if (this.spawnTimerMs <= 0) {
@@ -128,7 +128,7 @@ export class Game extends Scene {
                 }
 
                 if (enemy.takeDamage(projectile.damage)) {
-                    this.scrap += projectile.owner === 'drone' ? 2 : 3;
+                    this.gold += projectile.owner === 'drone' ? 2 : 3;
                 }
 
                 projectile.destroy();
@@ -187,7 +187,7 @@ export class Game extends Scene {
     }
 
     private refreshHud() {
-        this.hud.setStats(this.wave, this.hp, this.scrap);
+        this.hud.setStats(this.wave, this.hp, this.gold);
     }
 
     private gameOver() {
@@ -208,7 +208,7 @@ export class Game extends Scene {
         title.setOrigin(0.5);
         title.setDepth(201);
 
-        const score = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 28, `Волна ${this.wave}   Ресурсы ${this.scrap}`, {
+        const score = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 28, `Волна ${this.wave}   Золото ${this.gold}`, {
             fontFamily: 'Arial',
             fontSize: '24px',
             color: '#d8d0b8',

@@ -1,60 +1,212 @@
 import type { Scene } from 'phaser';
-import { COLORS, GAME_WIDTH, TRUCK } from '../config/gameplay';
+import { COLORS, GAME_HEIGHT, GAME_WIDTH, TRUCK, WAVES } from '../config/gameplay';
+
+type HudButton = {
+    back: Phaser.GameObjects.Rectangle;
+    label: Phaser.GameObjects.Text;
+};
 
 export class Hud {
-    private readonly waveText: Phaser.GameObjects.Text;
+    private readonly scene: Scene;
     private readonly hpText: Phaser.GameObjects.Text;
-    private readonly scrapText: Phaser.GameObjects.Text;
-    private readonly hpFill: Phaser.GameObjects.Rectangle;
+    private readonly goldText: Phaser.GameObjects.Text;
+    private readonly waveText: Phaser.GameObjects.Text;
+    private readonly waveDots: Phaser.GameObjects.Arc[] = [];
+    private readonly controlButtons: HudButton[] = [];
 
     constructor(scene: Scene) {
-        const panel = scene.add.rectangle(18, 18, 260, 126, COLORS.uiPanel, 0.78);
-        panel.setOrigin(0);
-        panel.setStrokeStyle(2, 0x2e3d2d, 0.9);
-        panel.setDepth(100);
+        this.scene = scene;
 
-        this.waveText = scene.add.text(38, 34, '', {
-            fontFamily: 'Arial Black, Arial',
-            fontSize: '24px',
-            color: '#f1f4df'
-        });
-        this.waveText.setDepth(101);
+        const resourceTexts = this.createResourcePanel();
+        this.hpText = resourceTexts.hpText;
+        this.goldText = resourceTexts.goldText;
 
-        this.hpText = scene.add.text(68, 72, '', {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#f8efe8'
-        });
-        this.hpText.setDepth(101);
-
-        this.scrapText = scene.add.text(68, 108, '', {
-            fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#f4d86b'
-        });
-        this.scrapText.setDepth(101);
-
-        const heart = scene.add.circle(50, 84, 11, COLORS.danger);
-        heart.setDepth(101);
-
-        const scrap = scene.add.polygon(50, 120, [0, -13, 13, 0, 0, 13, -13, 0], 0xf4c753);
-        scrap.setStrokeStyle(3, 0x5a4512);
-        scrap.setDepth(101);
-
-        const barBack = scene.add.rectangle(GAME_WIDTH - 286, 36, 248, 16, 0x151d13, 0.86);
-        barBack.setOrigin(0);
-        barBack.setStrokeStyle(2, 0x3b4d31);
-        barBack.setDepth(100);
-
-        this.hpFill = scene.add.rectangle(GAME_WIDTH - 282, 40, 240, 8, COLORS.health);
-        this.hpFill.setOrigin(0, 0);
-        this.hpFill.setDepth(101);
+        this.waveText = this.createWavePanel();
+        this.createControlButtons();
+        this.createAbilitySlots();
     }
 
-    setStats(wave: number, hp: number, scrap: number) {
-        this.waveText.setText(`ВОЛНА ${wave}`);
+    setStats(currentWave: number, hp: number, gold: number) {
+        const clampedWave = Math.min(currentWave, WAVES.max);
+        const completedWaves = Math.max(0, clampedWave - 1);
+
         this.hpText.setText(`${Math.max(0, hp)}/${TRUCK.maxHp}`);
-        this.scrapText.setText(String(scrap));
-        this.hpFill.scaleX = Math.max(0, hp / TRUCK.maxHp);
+        this.goldText.setText(String(gold));
+        this.waveText.setText(`ВОЛНА ${clampedWave}/${WAVES.max}`);
+
+        this.waveDots.forEach((dot, index) => {
+            const isComplete = index < completedWaves;
+            dot.setFillStyle(isComplete ? 0x65d65a : 0x2a2c29, 1);
+            dot.setStrokeStyle(2, isComplete ? 0x143d17 : 0x070807, 1);
+        });
+    }
+
+    private createResourcePanel() {
+        const panelX = 18;
+        const panelY = 18;
+        const panelWidth = 324;
+        const panelHeight = 70;
+
+        const panel = this.scene.add.rectangle(panelX, panelY, panelWidth, panelHeight, COLORS.uiPanel, 0.82);
+        panel.setOrigin(0);
+        panel.setStrokeStyle(2, 0x45483a, 0.86);
+        panel.setDepth(100);
+
+        this.createHeartIcon(panelX + 34, panelY + 35);
+        const hpText = this.scene.add.text(panelX + 70, panelY + 18, '', {
+            fontFamily: 'Arial Black, Arial',
+            fontSize: '26px',
+            color: '#f8efe8',
+            stroke: '#080808',
+            strokeThickness: 4
+        });
+        hpText.setDepth(102);
+
+        const divider = this.scene.add.rectangle(panelX + 156, panelY + 10, 2, panelHeight - 20, 0x4c4a3d, 0.75);
+        divider.setOrigin(0);
+        divider.setDepth(101);
+
+        this.createGoldIcon(panelX + 200, panelY + 35);
+        const goldText = this.scene.add.text(panelX + 236, panelY + 18, '', {
+            fontFamily: 'Arial Black, Arial',
+            fontSize: '26px',
+            color: '#fff5ce',
+            stroke: '#080808',
+            strokeThickness: 4
+        });
+        goldText.setDepth(102);
+
+        return { hpText, goldText };
+    }
+
+    private createWavePanel() {
+        const panelWidth = 316;
+        const panelHeight = 66;
+        const panelX = GAME_WIDTH / 2 - panelWidth / 2;
+        const panelY = 18;
+
+        const panel = this.scene.add.rectangle(panelX, panelY, panelWidth, panelHeight, COLORS.uiPanel, 0.84);
+        panel.setOrigin(0);
+        panel.setStrokeStyle(2, 0x2d3028, 0.9);
+        panel.setDepth(100);
+
+        const waveText = this.scene.add.text(GAME_WIDTH / 2, panelY + 20, '', {
+            fontFamily: 'Arial Black, Arial',
+            fontSize: '24px',
+            color: '#e9e3d4',
+            stroke: '#050505',
+            strokeThickness: 4
+        });
+        waveText.setOrigin(0.5);
+        waveText.setDepth(102);
+
+        const dotGap = 25;
+        const dotsWidth = (WAVES.max - 1) * dotGap;
+        const startX = GAME_WIDTH / 2 - dotsWidth / 2;
+        const y = panelY + 49;
+
+        const line = this.scene.add.rectangle(GAME_WIDTH / 2, y, dotsWidth + 18, 5, 0x111311, 1);
+        line.setDepth(101);
+
+        for (let index = 0; index < WAVES.max; index += 1) {
+            const dot = this.scene.add.circle(startX + index * dotGap, y, 7, 0x2a2c29);
+            dot.setStrokeStyle(2, 0x070807, 1);
+            dot.setDepth(102);
+            this.waveDots.push(dot);
+        }
+
+        return waveText;
+    }
+
+    private createControlButtons() {
+        this.createControlButton(GAME_WIDTH - 126, 18, 'Ⅱ');
+        this.createControlButton(GAME_WIDTH - 62, 18, 'x1');
+    }
+
+    private createControlButton(x: number, y: number, label: string) {
+        const size = 54;
+        const centerX = x + size / 2;
+        const centerY = y + size / 2;
+        const back = this.scene.add.rectangle(centerX, centerY, size, size, 0x111411, 0.86);
+        back.setOrigin(0.5);
+        back.setStrokeStyle(2, 0x67695a, 0.9);
+        back.setDepth(100);
+        back.setInteractive({ useHandCursor: true });
+
+        const text = this.scene.add.text(centerX, centerY, label, {
+            fontFamily: 'Arial Black, Arial',
+            fontSize: label === 'x1' ? '23px' : '30px',
+            color: '#e4dfd2',
+            stroke: '#040404',
+            strokeThickness: 4
+        });
+        text.setOrigin(0.5);
+        text.setDepth(101);
+
+        const button = { back, label: text };
+        this.controlButtons.push(button);
+
+        back.on('pointerover', () => this.setControlHover(button, true));
+        back.on('pointerout', () => this.setControlHover(button, false));
+    }
+
+    private setControlHover(button: HudButton, isHovering: boolean) {
+        button.back.setFillStyle(isHovering ? 0x22271e : 0x111411, 0.86);
+        button.back.setStrokeStyle(2, isHovering ? 0xa7ad87 : 0x67695a, 0.9);
+        button.back.setScale(isHovering ? 1.04 : 1);
+        button.label.setScale(isHovering ? 1.04 : 1);
+    }
+
+    private createAbilitySlots() {
+        const panelX = 20;
+        const panelY = GAME_HEIGHT - 106;
+        const panelWidth = 292;
+        const panelHeight = 86;
+
+        const panel = this.scene.add.rectangle(panelX, panelY, panelWidth, panelHeight, COLORS.uiPanel, 0.72);
+        panel.setOrigin(0);
+        panel.setStrokeStyle(2, 0x34382d, 0.86);
+        panel.setDepth(100);
+
+        for (let index = 0; index < 3; index += 1) {
+            this.createLockedSlot(panelX + 16 + index * 90, panelY + 11);
+        }
+    }
+
+    private createLockedSlot(x: number, y: number) {
+        const slot = this.scene.add.rectangle(x, y, 72, 64, 0x111411, 0.92);
+        slot.setOrigin(0);
+        slot.setStrokeStyle(3, 0x4a4d42, 0.9);
+        slot.setDepth(101);
+
+        const lockBody = this.scene.add.rectangle(x + 36, y + 39, 22, 19, 0x5b5d57, 1);
+        lockBody.setStrokeStyle(2, 0x191919, 1);
+        lockBody.setDepth(102);
+
+        const shackle = this.scene.add.arc(x + 36, y + 32, 13, 200, 340, false, undefined, 0);
+        shackle.setStrokeStyle(4, 0x7d8078, 1);
+        shackle.setDepth(102);
+
+        const keyhole = this.scene.add.circle(x + 36, y + 42, 3, 0x171717, 1);
+        keyhole.setDepth(103);
+    }
+
+    private createHeartIcon(x: number, y: number) {
+        const left = this.scene.add.circle(x - 7, y - 4, 10, COLORS.danger);
+        const right = this.scene.add.circle(x + 7, y - 4, 10, COLORS.danger);
+        const bottom = this.scene.add.triangle(x, y + 3, -18, -3, 18, -3, 0, 22, COLORS.danger);
+
+        [left, right, bottom].forEach((part) => {
+            part.setDepth(102);
+        });
+    }
+
+    private createGoldIcon(x: number, y: number) {
+        const gem = this.scene.add.polygon(x, y, [0, -15, 15, 0, 0, 15, -15, 0], 0xf5c84b);
+        gem.setStrokeStyle(4, 0x5b4210, 1);
+        gem.setDepth(102);
+
+        const shine = this.scene.add.polygon(x, y - 3, [0, -7, 7, 0, 0, 7, -7, 0], 0xfff0a3);
+        shine.setDepth(103);
     }
 }

@@ -11,7 +11,7 @@ export const TRUCK = {
     x: 450,
     y: WORLD.roadY,
     scale: 0.8,
-    maxHp: 18,
+    maxHp: 10,
     collisionRadius: 61
 };
 
@@ -36,6 +36,15 @@ export const ENEMY = {
     attackDelay: 720,
     attackDamage: 1,
     collisionRadius: 24
+};
+
+export const PLAYER = {
+    startGold: 0
+};
+
+export const WAVES = {
+    max: 12,
+    waveDurationMs: 18000
 };
 
 export const COLORS = {
