@@ -194,10 +194,10 @@ export class Game extends Scene {
         }
 
         if (side === 'top') {
-            return { x: this.randomBetween(80, GAME_WIDTH - 80), y: 112 };
+            return { x: this.randomBetween(80, GAME_WIDTH - 80), y: -70 };
         }
 
-        return { x: this.randomBetween(80, GAME_WIDTH - 80), y: GAME_HEIGHT + 48 };
+        return { x: this.randomBetween(80, GAME_WIDTH - 80), y: GAME_HEIGHT + 70 };
     }
 
     private randomBetween(min: number, max: number) {

@@ -30,11 +30,8 @@ export class WorldRenderer {
         const g = this.graphics;
         g.clear();
 
-        g.fillStyle(COLORS.background, 1);
-        g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
         g.fillStyle(COLORS.dirt, 1);
-        g.fillRect(0, 100, GAME_WIDTH, GAME_HEIGHT - 100);
+        g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
         this.drawGroundTexture(g);
         this.drawScenery(g);

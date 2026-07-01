@@ -2,13 +2,13 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 
 export const WORLD = {
-    roadY: 410,
+    roadY: GAME_HEIGHT / 2 + 30,
     roadHeight: 110,
     scrollSpeed: 86
 };
 
 export const TRUCK = {
-    x: 450,
+    x: GAME_WIDTH / 2,
     y: WORLD.roadY,
     scale: 0.8,
     maxHp: 10,
