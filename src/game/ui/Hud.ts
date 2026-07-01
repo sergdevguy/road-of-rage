@@ -6,23 +6,35 @@ type HudButton = {
     label: Phaser.GameObjects.Text;
 };
 
+type HudCallbacks = {
+    onTogglePause: () => void;
+    onCycleSpeed: () => void;
+};
+
 export class Hud {
     private readonly scene: Scene;
+    private readonly callbacks: HudCallbacks;
     private readonly hpText: Phaser.GameObjects.Text;
     private readonly goldText: Phaser.GameObjects.Text;
     private readonly waveText: Phaser.GameObjects.Text;
+    private readonly pauseButton: HudButton;
+    private readonly speedButton: HudButton;
     private readonly waveDots: Phaser.GameObjects.Arc[] = [];
     private readonly controlButtons: HudButton[] = [];
+    private isPaused = false;
 
-    constructor(scene: Scene) {
+    constructor(scene: Scene, callbacks: HudCallbacks) {
         this.scene = scene;
+        this.callbacks = callbacks;
 
         const resourceTexts = this.createResourcePanel();
         this.hpText = resourceTexts.hpText;
         this.goldText = resourceTexts.goldText;
 
         this.waveText = this.createWavePanel();
-        this.createControlButtons();
+        const controlButtons = this.createControlButtons();
+        this.pauseButton = controlButtons.pauseButton;
+        this.speedButton = controlButtons.speedButton;
         this.createAbilitySlots();
     }
 
@@ -39,6 +51,16 @@ export class Hud {
             dot.setFillStyle(isComplete ? 0x65d65a : 0x2a2c29, 1);
             dot.setStrokeStyle(2, isComplete ? 0x143d17 : 0x070807, 1);
         });
+    }
+
+    setPaused(isPaused: boolean) {
+        this.isPaused = isPaused;
+        this.pauseButton.label.setText(isPaused ? '▶' : 'Ⅱ');
+        this.pauseButton.back.setFillStyle(isPaused ? 0x27331f : 0x111411, 0.86);
+    }
+
+    setSpeed(speedMultiplier: number) {
+        this.speedButton.label.setText(`x${speedMultiplier}`);
     }
 
     private createResourcePanel() {
@@ -119,11 +141,13 @@ export class Hud {
     }
 
     private createControlButtons() {
-        this.createControlButton(GAME_WIDTH - 126, 18, 'Ⅱ');
-        this.createControlButton(GAME_WIDTH - 62, 18, 'x1');
+        return {
+            pauseButton: this.createControlButton(GAME_WIDTH - 126, 18, 'Ⅱ', this.callbacks.onTogglePause),
+            speedButton: this.createControlButton(GAME_WIDTH - 62, 18, 'x1', this.callbacks.onCycleSpeed)
+        };
     }
 
-    private createControlButton(x: number, y: number, label: string) {
+    private createControlButton(x: number, y: number, label: string, onClick: () => void) {
         const size = 54;
         const centerX = x + size / 2;
         const centerY = y + size / 2;
@@ -148,10 +172,19 @@ export class Hud {
 
         back.on('pointerover', () => this.setControlHover(button, true));
         back.on('pointerout', () => this.setControlHover(button, false));
+        back.on('pointerdown', onClick);
+
+        text.setInteractive({ useHandCursor: true });
+        text.on('pointerover', () => this.setControlHover(button, true));
+        text.on('pointerout', () => this.setControlHover(button, false));
+        text.on('pointerdown', onClick);
+
+        return button;
     }
 
     private setControlHover(button: HudButton, isHovering: boolean) {
-        button.back.setFillStyle(isHovering ? 0x22271e : 0x111411, 0.86);
+        const activeColor = button === this.pauseButton && this.isPaused ? 0x27331f : 0x111411;
+        button.back.setFillStyle(isHovering ? 0x22271e : activeColor, 0.86);
         button.back.setStrokeStyle(2, isHovering ? 0xa7ad87 : 0x67695a, 0.9);
         button.back.setScale(isHovering ? 1.04 : 1);
         button.label.setScale(isHovering ? 1.04 : 1);

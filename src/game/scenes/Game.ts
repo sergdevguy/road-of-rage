@@ -9,6 +9,8 @@ import { WorldRenderer } from '../rendering/WorldRenderer';
 import type { EnemyKind, Point, SpawnSide } from '../types';
 import { Hud } from '../ui/Hud';
 
+type GameSpeed = 1 | 2 | 3;
+
 export class Game extends Scene {
     private world: WorldRenderer;
     private truck: Truck;
@@ -23,6 +25,8 @@ export class Game extends Scene {
     private spawnTimerMs = 0;
     private elapsedMs = 0;
     private isGameOver = false;
+    private isPaused = false;
+    private speedMultiplier: GameSpeed = 1;
 
     constructor() {
         super('Game');
@@ -39,12 +43,17 @@ export class Game extends Scene {
         this.spawnTimerMs = 0;
         this.elapsedMs = 0;
         this.isGameOver = false;
+        this.isPaused = false;
+        this.speedMultiplier = 1;
     }
 
     create() {
         this.world = new WorldRenderer(this);
         this.truck = new Truck(this);
-        this.hud = new Hud(this);
+        this.hud = new Hud(this, {
+            onTogglePause: () => this.togglePause(),
+            onCycleSpeed: () => this.cycleSpeed()
+        });
 
         this.turrets = this.truck.hardpoints().map((mount) => new Turret(this, this.truck, mount));
         this.drones = [
@@ -60,17 +69,18 @@ export class Game extends Scene {
     }
 
     update(_time: number, delta: number) {
-        const deltaSeconds = Math.min(delta / 1000, 0.05);
-
-        this.world.update(deltaSeconds);
-
-        if (this.isGameOver) {
+        if (this.isPaused || this.isGameOver) {
             return;
         }
 
-        this.elapsedMs += delta;
+        const scaledDelta = delta * this.speedMultiplier;
+        const deltaSeconds = Math.min(scaledDelta / 1000, 0.05);
+
+        this.world.update(deltaSeconds);
+
+        this.elapsedMs += scaledDelta;
         this.wave = Math.min(WAVES.max, 1 + Math.floor(this.elapsedMs / WAVES.waveDurationMs));
-        this.spawnTimerMs -= delta;
+        this.spawnTimerMs -= scaledDelta;
 
         if (this.spawnTimerMs <= 0) {
             this.spawnEnemy();
@@ -196,6 +206,27 @@ export class Game extends Scene {
 
     private refreshHud() {
         this.hud.setStats(this.wave, this.hp, this.gold);
+    }
+
+    private togglePause() {
+        if (this.isGameOver) {
+            return;
+        }
+
+        this.isPaused = !this.isPaused;
+        this.hud.setPaused(this.isPaused);
+    }
+
+    private cycleSpeed() {
+        if (this.speedMultiplier === 1) {
+            this.speedMultiplier = 2;
+        } else if (this.speedMultiplier === 2) {
+            this.speedMultiplier = 3;
+        } else {
+            this.speedMultiplier = 1;
+        }
+
+        this.hud.setSpeed(this.speedMultiplier);
     }
 
     private gameOver() {
