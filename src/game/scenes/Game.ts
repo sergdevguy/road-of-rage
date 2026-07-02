@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH, PLAYER, TRUCK, WAVES } from '../config/gameplay';
+import { COMBAT, GAME_HEIGHT, GAME_WIDTH, PLAYER, TRUCK, WAVES } from '../config/gameplay';
 import { WAVE_TYPE_LABELS } from '../config/waves';
 import { Drone } from '../entities/Drone';
 import { Enemy } from '../entities/Enemy';
@@ -8,7 +8,9 @@ import { Truck } from '../entities/Truck';
 import { Turret } from '../entities/Turret';
 import { WorldRenderer } from '../rendering/WorldRenderer';
 import { EnemySpawner } from '../spawners/EnemySpawner';
+import { BonusManager, type RunUpgradeState } from '../systems/BonusManager';
 import { WaveManager } from '../systems/WaveManager';
+import { BonusSelection } from '../ui/BonusSelection';
 import { Hud } from '../ui/Hud';
 
 type GameSpeed = 1 | 2 | 3;
@@ -17,18 +19,21 @@ export class Game extends Scene {
     private world: WorldRenderer;
     private truck: Truck;
     private hud: Hud;
+    private bonusSelection: BonusSelection;
     private enemySpawner: EnemySpawner;
     private waveManager: WaveManager;
+    private bonusManager: BonusManager;
+    private runState: RunUpgradeState;
     private turrets: Turret[] = [];
     private drones: Drone[] = [];
     private enemies: Enemy[] = [];
     private projectiles: Projectile[] = [];
     private removedEnemies = new WeakSet<Enemy>();
-    private hp = TRUCK.maxHp;
     private gold = PLAYER.startGold;
     private wave = 1;
     private isGameOver = false;
     private isPaused = false;
+    private isGameplayPaused = false;
     private speedMultiplier: GameSpeed = 1;
 
     constructor() {
@@ -41,11 +46,12 @@ export class Game extends Scene {
         this.enemies = [];
         this.projectiles = [];
         this.removedEnemies = new WeakSet();
-        this.hp = TRUCK.maxHp;
+        this.runState = this.createInitialRunState();
         this.gold = PLAYER.startGold;
         this.wave = 1;
         this.isGameOver = false;
         this.isPaused = false;
+        this.isGameplayPaused = false;
         this.speedMultiplier = 1;
     }
 
@@ -56,12 +62,11 @@ export class Game extends Scene {
             onTogglePause: () => this.togglePause(),
             onCycleSpeed: () => this.cycleSpeed()
         });
+        this.bonusSelection = new BonusSelection(this);
+        this.bonusManager = new BonusManager(this.runState);
 
-        this.turrets = this.truck.hardpoints().map((mount) => new Turret(this, this.truck, mount));
-        this.drones = [
-            new Drone(this, this.truck, -0.4, 176),
-            new Drone(this, this.truck, 2.2, 210)
-        ];
+        this.syncLoadout();
+        this.truck.setHp(this.runState.currentHp, this.runState.maxHp);
 
         this.enemySpawner = new EnemySpawner(this);
         this.waveManager = new WaveManager({
@@ -82,6 +87,9 @@ export class Game extends Scene {
             onWaveCompleted: () => {
                 this.hud.showStatusMessage('ВОЛНА ЗАВЕРШЕНА', 1200);
             },
+            onBonusChoiceRequested: () => {
+                this.showBonusSelection();
+            },
             onRunCompleted: () => {
                 this.hud.showStatusMessage('ЗАБЕГ ЗАВЕРШЁН', 0);
             }
@@ -101,11 +109,24 @@ export class Game extends Scene {
         const scaledDelta = delta * this.speedMultiplier;
         const deltaSeconds = Math.min(scaledDelta / 1000, 0.05);
 
-        this.world.update(deltaSeconds);
-        this.waveManager.update(scaledDelta);
         this.hud.update(scaledDelta);
 
+        if (this.isGameplayPaused) {
+            this.refreshHud();
+            return;
+        }
+
+        this.world.update(deltaSeconds);
+        this.waveManager.update(scaledDelta);
+
         this.updateEnemies(deltaSeconds);
+
+        if (this.isGameplayPaused) {
+            this.cleanupDestroyed();
+            this.refreshHud();
+            return;
+        }
+
         this.updateWeapons(deltaSeconds);
         this.updateProjectiles(deltaSeconds);
         this.cleanupDestroyed();
@@ -135,11 +156,11 @@ export class Game extends Scene {
             const damage = enemy.update(deltaSeconds, this.truck.position);
 
             if (damage > 0) {
-                this.hp -= damage;
-                this.truck.setHp(this.hp);
+                this.runState.currentHp -= damage;
+                this.truck.setHp(this.runState.currentHp, this.runState.maxHp);
                 this.handleEnemyRemoved(enemy, true);
 
-                if (this.hp <= 0) {
+                if (this.runState.currentHp <= 0) {
                     this.gameOver();
                     return;
                 }
@@ -198,7 +219,7 @@ export class Game extends Scene {
     }
 
     private refreshHud() {
-        this.hud.setStats(this.wave, this.hp, this.gold);
+        this.hud.setStats(this.wave, this.runState.currentHp, this.runState.maxHp, this.gold);
     }
 
     private togglePause() {
@@ -224,7 +245,7 @@ export class Game extends Scene {
 
     private gameOver() {
         this.isGameOver = true;
-        this.hp = 0;
+        this.runState.currentHp = 0;
         this.refreshHud();
 
         const shade = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x050705, 0.62);
@@ -252,6 +273,7 @@ export class Game extends Scene {
 
     private shutdownSystems() {
         this.waveManager?.destroy();
+        this.bonusSelection?.hide();
 
         for (const enemy of this.enemies) {
             enemy.destroy();
@@ -263,5 +285,74 @@ export class Game extends Scene {
 
         this.enemies = [];
         this.projectiles = [];
+    }
+
+    private showBonusSelection() {
+        this.isGameplayPaused = true;
+        const choices = this.bonusManager.getChoices(3);
+
+        if (choices.length <= 0) {
+            this.isGameplayPaused = false;
+            this.waveManager.continueAfterBonus();
+            return;
+        }
+
+        this.bonusSelection.show(choices, (bonusId) => {
+            this.bonusManager.applyBonus(bonusId);
+            this.syncLoadout();
+            this.truck.setHp(this.runState.currentHp, this.runState.maxHp);
+            this.refreshHud();
+            this.bonusSelection.hide();
+            this.isGameplayPaused = false;
+            this.waveManager.continueAfterBonus();
+        });
+    }
+
+    private syncLoadout() {
+        const hardpoints = this.truck.hardpoints();
+
+        while (this.turrets.length < this.runState.gunCount && this.turrets.length < this.runState.maxGunSlots) {
+            const mount = hardpoints[this.turrets.length];
+            this.turrets.push(new Turret(this, this.truck, mount, () => this.gunStats()));
+        }
+
+        const droneSlots = [
+            { phase: -0.4, orbitRadius: 176 },
+            { phase: 2.2, orbitRadius: 210 }
+        ];
+
+        while (this.drones.length < this.runState.droneCount && this.drones.length < this.runState.maxDroneSlots) {
+            const slot = droneSlots[this.drones.length];
+            this.drones.push(new Drone(this, this.truck, slot.phase, slot.orbitRadius, () => this.droneStats()));
+        }
+    }
+
+    private gunStats() {
+        return {
+            damage: COMBAT.turretDamage * this.runState.gunDamageMultiplier,
+            fireDelay: COMBAT.turretFireDelay / this.runState.gunFireRateMultiplier
+        };
+    }
+
+    private droneStats() {
+        return {
+            damage: COMBAT.droneDamage * this.runState.droneDamageMultiplier,
+            fireDelay: COMBAT.droneFireDelay / this.runState.droneFireRateMultiplier
+        };
+    }
+
+    private createInitialRunState(): RunUpgradeState {
+        return {
+            gunCount: 1,
+            maxGunSlots: 3,
+            droneCount: 0,
+            maxDroneSlots: 2,
+            gunDamageMultiplier: 1,
+            gunFireRateMultiplier: 1,
+            droneDamageMultiplier: 1,
+            droneFireRateMultiplier: 1,
+            maxHp: TRUCK.maxHp,
+            currentHp: TRUCK.maxHp
+        };
     }
 }

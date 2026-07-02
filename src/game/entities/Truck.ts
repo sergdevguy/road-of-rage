@@ -44,8 +44,8 @@ export class Truck {
         this.container.add(child);
     }
 
-    setHp(hp: number) {
-        this.healthFill.scaleX = Math.max(0, hp / TRUCK.maxHp);
+    setHp(hp: number, maxHp = TRUCK.maxHp) {
+        this.healthFill.scaleX = Math.max(0, hp / maxHp);
     }
 
     hardpoints(): Point[] {

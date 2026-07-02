@@ -6,17 +6,24 @@ import { Enemy } from './Enemy';
 import { Projectile } from './Projectile';
 import { Truck } from './Truck';
 
+type TurretStats = {
+    damage: number;
+    fireDelay: number;
+};
+
 export class Turret {
     private readonly scene: Scene;
     private readonly truck: Truck;
     private readonly mount: Point;
+    private readonly statsProvider: () => TurretStats;
     private readonly container: Phaser.GameObjects.Container;
     private cooldownMs = 0;
 
-    constructor(scene: Scene, truck: Truck, mount: Point) {
+    constructor(scene: Scene, truck: Truck, mount: Point, statsProvider: () => TurretStats) {
         this.scene = scene;
         this.truck = truck;
         this.mount = mount;
+        this.statsProvider = statsProvider;
         this.container = scene.add.container(mount.x, mount.y);
 
         const base = scene.add.circle(0, 0, 16, 0x2d3a21);
@@ -50,14 +57,15 @@ export class Turret {
             return null;
         }
 
-        this.cooldownMs = COMBAT.turretFireDelay;
+        const stats = this.statsProvider();
+        this.cooldownMs = stats.fireDelay;
         this.flash(position, angle);
 
         return new Projectile(
             this.scene,
             pointOnCircle(position, 34, angle),
             angle,
-            COMBAT.turretDamage,
+            stats.damage,
             'turret'
         );
     }

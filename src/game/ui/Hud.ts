@@ -1,5 +1,5 @@
 import type { Scene } from 'phaser';
-import { COLORS, GAME_HEIGHT, GAME_WIDTH, TRUCK, WAVES } from '../config/gameplay';
+import { COLORS, GAME_HEIGHT, GAME_WIDTH, WAVES } from '../config/gameplay';
 
 type HudButton = {
     back: Phaser.GameObjects.Rectangle;
@@ -41,11 +41,11 @@ export class Hud {
         this.createAbilitySlots();
     }
 
-    setStats(currentWave: number, hp: number, gold: number) {
+    setStats(currentWave: number, hp: number, maxHp: number, gold: number) {
         const clampedWave = Math.min(currentWave, WAVES.max);
         const completedWaves = Math.max(0, clampedWave - 1);
 
-        this.hpText.setText(`${Math.max(0, hp)}/${TRUCK.maxHp}`);
+        this.hpText.setText(`${Math.max(0, hp)}/${maxHp}`);
         this.goldText.setText(String(gold));
         this.waveText.setText(`ВОЛНА ${clampedWave}/${WAVES.max}`);
 

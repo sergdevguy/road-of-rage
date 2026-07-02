@@ -6,9 +6,15 @@ import { Enemy } from './Enemy';
 import { Projectile } from './Projectile';
 import { Truck } from './Truck';
 
+type DroneStats = {
+    damage: number;
+    fireDelay: number;
+};
+
 export class Drone {
     private readonly scene: Scene;
     private readonly truck: Truck;
+    private readonly statsProvider: () => DroneStats;
     private readonly container: Phaser.GameObjects.Container;
     private readonly cannon: Phaser.GameObjects.Rectangle;
     private readonly orbitRadius: number;
@@ -16,9 +22,10 @@ export class Drone {
     private phase: number;
     private cooldownMs = 0;
 
-    constructor(scene: Scene, truck: Truck, phase: number, orbitRadius: number) {
+    constructor(scene: Scene, truck: Truck, phase: number, orbitRadius: number, statsProvider: () => DroneStats) {
         this.scene = scene;
         this.truck = truck;
+        this.statsProvider = statsProvider;
         this.phase = phase;
         this.orbitRadius = orbitRadius;
         this.orbitSpeed = 1.4 + Math.random() * 0.35;
@@ -65,13 +72,14 @@ export class Drone {
             return null;
         }
 
-        this.cooldownMs = COMBAT.droneFireDelay;
+        const stats = this.statsProvider();
+        this.cooldownMs = stats.fireDelay;
 
         return new Projectile(
             this.scene,
             pointOnCircle(this.position, 28, angle),
             angle,
-            COMBAT.droneDamage,
+            stats.damage,
             'drone'
         );
     }

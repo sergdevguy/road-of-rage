@@ -15,7 +15,9 @@ export type WaveState =
     | 'idle'
     | 'spawning'
     | 'waitingForEnemies'
-    | 'betweenWaves';
+    | 'betweenWaves'
+    | 'choosingBonus'
+    | 'completed';
 
 type SpawnOptions = {
     type: EnemyType;
@@ -38,6 +40,7 @@ type WaveManagerOptions = {
     spawnEnemy: (options: SpawnOptions) => void;
     onWaveStarted?: (waveNumber: number, config: WaveConfig) => void;
     onWaveCompleted?: (waveNumber: number) => void;
+    onBonusChoiceRequested?: (waveNumber: number) => void;
     onRunCompleted?: () => void;
 };
 
@@ -102,6 +105,15 @@ export class WaveManager {
         }
 
         this.completeWaveIfReady();
+    }
+
+    continueAfterBonus() {
+        if (this.stateValue !== 'choosingBonus') {
+            return;
+        }
+
+        this.stateValue = 'betweenWaves';
+        this.betweenWaveTimerMs = this.options.betweenWaveDelay;
     }
 
     destroy() {
@@ -246,8 +258,8 @@ export class WaveManager {
             return;
         }
 
-        this.stateValue = 'betweenWaves';
-        this.betweenWaveTimerMs = this.options.betweenWaveDelay;
+        this.stateValue = 'choosingBonus';
+        this.options.onBonusChoiceRequested?.(this.waveNumber);
     }
 
     private completeRun() {
@@ -256,7 +268,7 @@ export class WaveManager {
         }
 
         this.isRunCompleted = true;
-        this.stateValue = 'idle';
+        this.stateValue = 'completed';
         this.options.onRunCompleted?.();
     }
 
