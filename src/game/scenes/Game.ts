@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH, PLAYER, TRUCK, WAVES } from '../config/gameplay';
+import { WAVE_TYPE_LABELS } from '../config/waves';
 import { Drone } from '../entities/Drone';
 import { Enemy } from '../entities/Enemy';
 import { Projectile } from '../entities/Projectile';
@@ -69,12 +70,13 @@ export class Game extends Scene {
             betweenWaveDelay: WAVES.betweenWaveDelayMs,
             basePowerBudget: WAVES.basePowerBudget,
             powerBudgetStep: WAVES.powerBudgetStep,
+            maxAlive: WAVES.maxAlive,
             spawnEnemy: (options) => {
                 this.enemies.push(this.enemySpawner.spawnEnemy(options));
             },
-            onWaveStarted: (waveNumber) => {
+            onWaveStarted: (waveNumber, config) => {
                 this.wave = waveNumber;
-                this.hud.showStatusMessage(`ВОЛНА ${waveNumber}`, 900);
+                this.hud.showStatusMessage(`ВОЛНА ${waveNumber}\n${WAVE_TYPE_LABELS[config.waveType]}`, 1200);
                 this.refreshHud();
             },
             onWaveCompleted: () => {

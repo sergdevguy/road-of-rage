@@ -1,8 +1,10 @@
 import { ENEMY_DEFINITIONS, type EnemyType } from '../config/enemies';
+import { WAVE_TYPE_DEFINITIONS, type WaveType } from '../config/waves';
 
 const DEBUG_WAVES = false;
 
 export type WaveConfig = {
+    waveType: WaveType;
     powerBudget: number;
     spawnInterval: number;
     hpMultiplier: number;
@@ -30,6 +32,7 @@ type WaveManagerOptions = {
     betweenWaveDelay: number;
     basePowerBudget: number;
     powerBudgetStep: number;
+    maxAlive: number;
     spawnEnemy: (options: SpawnOptions) => void;
     onWaveStarted?: (waveNumber: number, config: WaveConfig) => void;
     onWaveCompleted?: (waveNumber: number) => void;
@@ -117,9 +120,14 @@ export class WaveManager {
     }
 
     private createWaveConfig(waveNumber: number): WaveConfig {
+        const waveType = this.selectWaveType(waveNumber);
+        const waveTypeDefinition = WAVE_TYPE_DEFINITIONS[waveType];
+        const basePowerBudget = this.options.basePowerBudget + (waveNumber - 1) * this.options.powerBudgetStep;
+
         return {
-            powerBudget: this.options.basePowerBudget + (waveNumber - 1) * this.options.powerBudgetStep,
-            spawnInterval: this.options.spawnInterval,
+            waveType,
+            powerBudget: Math.round(basePowerBudget * waveTypeDefinition.budgetMultiplier),
+            spawnInterval: Math.round(this.options.spawnInterval * waveTypeDefinition.spawnIntervalMultiplier),
             hpMultiplier: 1 + (waveNumber - 1) * 0.15
         };
     }
@@ -152,7 +160,9 @@ export class WaveManager {
         if (DEBUG_WAVES) {
             console.debug({
                 waveNumber,
+                waveType: this.activeConfig?.waveType,
                 powerBudget,
+                spawnInterval: this.activeConfig?.spawnInterval,
                 enemyQueue: queue,
                 spentPower
             });
@@ -168,9 +178,17 @@ export class WaveManager {
             return;
         }
 
+        if (this.aliveEnemies >= this.options.maxAlive) {
+            return;
+        }
+
         this.spawnTimerMs += deltaMs;
 
-        while (this.spawnTimerMs >= this.activeConfig.spawnInterval && this.enemyQueue.length > 0) {
+        while (
+            this.spawnTimerMs >= this.activeConfig.spawnInterval &&
+            this.enemyQueue.length > 0 &&
+            this.aliveEnemies < this.options.maxAlive
+        ) {
             this.spawnTimerMs -= this.activeConfig.spawnInterval;
             this.spawnOneEnemy();
         }
@@ -230,40 +248,35 @@ export class WaveManager {
         this.options.onRunCompleted?.();
     }
 
-    private getEnemyWeights(waveNumber: number): EnemyWeight[] {
-        if (waveNumber <= 1) {
-            return [
-                { type: 'fastCar', weight: 100 }
-            ];
+    private selectWaveType(waveNumber: number): WaveType {
+        if (waveNumber === 1) {
+            return 'chase';
         }
 
         if (waveNumber === 2) {
-            return [
-                { type: 'fastCar', weight: 75 },
-                { type: 'drone', weight: 25 }
-            ];
+            return 'swarm';
         }
 
         if (waveNumber === 3) {
-            return [
-                { type: 'fastCar', weight: 60 },
-                { type: 'armoredCar', weight: 40 }
-            ];
+            return 'armoredColumn';
         }
 
         if (waveNumber === 4) {
-            return [
-                { type: 'fastCar', weight: 45 },
-                { type: 'armoredCar', weight: 30 },
-                { type: 'drone', weight: 25 }
-            ];
+            return 'airAttack';
         }
 
-        return [
-            { type: 'fastCar', weight: 30 },
-            { type: 'armoredCar', weight: 45 },
-            { type: 'drone', weight: 25 }
-        ];
+        const waveTypes: WaveType[] = ['chase', 'swarm', 'armoredColumn', 'airAttack'];
+        return waveTypes[Math.floor(Math.random() * waveTypes.length)];
+    }
+
+    private getEnemyWeights(waveNumber: number): EnemyWeight[] {
+        const waveType = this.activeConfig?.waveType ?? this.selectWaveType(waveNumber);
+        const enemyWeights = WAVE_TYPE_DEFINITIONS[waveType].enemyWeights;
+
+        return Object.entries(enemyWeights).map(([type, weight]) => ({
+            type: type as EnemyType,
+            weight: weight ?? 0
+        })).filter((item) => item.weight > 0);
     }
 
     private pickWeightedEnemyType(weights: EnemyWeight[]) {

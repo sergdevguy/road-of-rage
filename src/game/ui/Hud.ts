@@ -167,7 +167,8 @@ export class Hud {
             fontSize: '26px',
             color: '#f4edcf',
             stroke: '#050505',
-            strokeThickness: 5
+            strokeThickness: 5,
+            align: 'center'
         });
         statusText.setOrigin(0.5);
         statusText.setDepth(103);

@@ -43,7 +43,8 @@ export const WAVES = {
     spawnIntervalMs: 1050,
     betweenWaveDelayMs: 2000,
     basePowerBudget: 50,
-    powerBudgetStep: 25
+    powerBudgetStep: 25,
+    maxAlive: 20
 };
 
 export const COLORS = {
