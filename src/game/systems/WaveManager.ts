@@ -1,5 +1,6 @@
 import { ENEMY_DEFINITIONS, type EnemyType } from '../config/enemies';
 import { WAVE_TYPE_DEFINITIONS, type WaveType } from '../config/waves';
+import { createWaveSequence } from './createWaveSequence';
 
 const DEBUG_WAVES = false;
 
@@ -33,6 +34,7 @@ type WaveManagerOptions = {
     basePowerBudget: number;
     powerBudgetStep: number;
     maxAlive: number;
+    random?: () => number;
     spawnEnemy: (options: SpawnOptions) => void;
     onWaveStarted?: (waveNumber: number, config: WaveConfig) => void;
     onWaveCompleted?: (waveNumber: number) => void;
@@ -41,8 +43,10 @@ type WaveManagerOptions = {
 
 export class WaveManager {
     private readonly options: WaveManagerOptions;
+    private readonly random: () => number;
     private waveNumber = 0;
     private activeConfig: WaveConfig | null = null;
+    private waveSequence: WaveType[] = [];
     private enemyQueue: EnemyType[] = [];
     private stateValue: WaveState = 'idle';
     private aliveEnemies = 0;
@@ -52,6 +56,7 @@ export class WaveManager {
 
     constructor(options: WaveManagerOptions) {
         this.options = options;
+        this.random = options.random ?? Math.random;
     }
 
     get currentWave() {
@@ -65,6 +70,12 @@ export class WaveManager {
     start() {
         if (this.stateValue !== 'idle' || this.isRunCompleted) {
             return;
+        }
+
+        this.waveSequence = createWaveSequence(this.options.maxWaves, this.random);
+
+        if (DEBUG_WAVES) {
+            console.debug('Wave sequence:', this.waveSequence);
         }
 
         this.startNextWave();
@@ -96,6 +107,7 @@ export class WaveManager {
     destroy() {
         this.stateValue = 'idle';
         this.activeConfig = null;
+        this.waveSequence = [];
         this.enemyQueue = [];
         this.aliveEnemies = 0;
         this.spawnTimerMs = 0;
@@ -120,7 +132,7 @@ export class WaveManager {
     }
 
     private createWaveConfig(waveNumber: number): WaveConfig {
-        const waveType = this.selectWaveType(waveNumber);
+        const waveType = this.waveSequence[waveNumber - 1] ?? 'chase';
         const waveTypeDefinition = WAVE_TYPE_DEFINITIONS[waveType];
         const basePowerBudget = this.options.basePowerBudget + (waveNumber - 1) * this.options.powerBudgetStep;
 
@@ -248,29 +260,8 @@ export class WaveManager {
         this.options.onRunCompleted?.();
     }
 
-    private selectWaveType(waveNumber: number): WaveType {
-        if (waveNumber === 1) {
-            return 'chase';
-        }
-
-        if (waveNumber === 2) {
-            return 'swarm';
-        }
-
-        if (waveNumber === 3) {
-            return 'armoredColumn';
-        }
-
-        if (waveNumber === 4) {
-            return 'airAttack';
-        }
-
-        const waveTypes: WaveType[] = ['chase', 'swarm', 'armoredColumn', 'airAttack'];
-        return waveTypes[Math.floor(Math.random() * waveTypes.length)];
-    }
-
     private getEnemyWeights(waveNumber: number): EnemyWeight[] {
-        const waveType = this.activeConfig?.waveType ?? this.selectWaveType(waveNumber);
+        const waveType = this.activeConfig?.waveType ?? this.waveSequence[waveNumber - 1] ?? 'chase';
         const enemyWeights = WAVE_TYPE_DEFINITIONS[waveType].enemyWeights;
 
         return Object.entries(enemyWeights).map(([type, weight]) => ({
@@ -281,7 +272,7 @@ export class WaveManager {
 
     private pickWeightedEnemyType(weights: EnemyWeight[]) {
         const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0);
-        let roll = Math.random() * totalWeight;
+        let roll = this.random() * totalWeight;
 
         for (const item of weights) {
             roll -= item.weight;

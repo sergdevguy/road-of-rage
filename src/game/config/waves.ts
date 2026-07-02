@@ -58,3 +58,37 @@ export const WAVE_TYPE_DEFINITIONS: Record<WaveType, WaveTypeDefinition> = {
         budgetMultiplier: 1
     }
 };
+
+export const FIRST_WAVE_SELECTION_WEIGHTS: Partial<Record<WaveType, number>> = {
+    chase: 60,
+    swarm: 40
+};
+
+export const WAVE_TYPE_SELECTION_WEIGHTS: Record<WaveType, number> = {
+    chase: 35,
+    swarm: 30,
+    armoredColumn: 20,
+    airAttack: 15
+};
+
+export const FINAL_WAVE_SELECTION_WEIGHTS: Record<WaveType, number> = {
+    chase: 15,
+    swarm: 20,
+    armoredColumn: 35,
+    airAttack: 30
+};
+
+export const WAVE_SEQUENCE_SETTINGS = {
+    sameAsPreviousMultiplier: 0.25,
+    sameAsTwoWavesAgoMultiplier: 0.7,
+    minUniqueTypes: 3,
+    maxGenerationAttempts: 20
+};
+
+export const FALLBACK_WAVE_SEQUENCE: WaveType[] = [
+    'chase',
+    'swarm',
+    'armoredColumn',
+    'airAttack',
+    'chase'
+];
