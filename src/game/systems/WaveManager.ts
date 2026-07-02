@@ -1,7 +1,9 @@
-import type { EnemyType } from '../config/enemies';
+import { ENEMY_DEFINITIONS, type EnemyType } from '../config/enemies';
+
+const DEBUG_WAVES = false;
 
 export type WaveConfig = {
-    enemyCount: number;
+    powerBudget: number;
     spawnInterval: number;
     hpMultiplier: number;
 };
@@ -17,10 +19,17 @@ type SpawnOptions = {
     hpMultiplier: number;
 };
 
+type EnemyWeight = {
+    type: EnemyType;
+    weight: number;
+};
+
 type WaveManagerOptions = {
     maxWaves: number;
     spawnInterval: number;
     betweenWaveDelay: number;
+    basePowerBudget: number;
+    powerBudgetStep: number;
     spawnEnemy: (options: SpawnOptions) => void;
     onWaveStarted?: (waveNumber: number, config: WaveConfig) => void;
     onWaveCompleted?: (waveNumber: number) => void;
@@ -31,8 +40,8 @@ export class WaveManager {
     private readonly options: WaveManagerOptions;
     private waveNumber = 0;
     private activeConfig: WaveConfig | null = null;
+    private enemyQueue: EnemyType[] = [];
     private stateValue: WaveState = 'idle';
-    private enemiesLeftToSpawn = 0;
     private aliveEnemies = 0;
     private spawnTimerMs = 0;
     private betweenWaveTimerMs = 0;
@@ -84,7 +93,7 @@ export class WaveManager {
     destroy() {
         this.stateValue = 'idle';
         this.activeConfig = null;
-        this.enemiesLeftToSpawn = 0;
+        this.enemyQueue = [];
         this.aliveEnemies = 0;
         this.spawnTimerMs = 0;
         this.betweenWaveTimerMs = 0;
@@ -98,7 +107,7 @@ export class WaveManager {
 
         this.waveNumber += 1;
         this.activeConfig = this.createWaveConfig(this.waveNumber);
-        this.enemiesLeftToSpawn = this.activeConfig.enemyCount;
+        this.enemyQueue = this.createEnemyQueue(this.waveNumber, this.activeConfig.powerBudget);
         this.aliveEnemies = 0;
         this.spawnTimerMs = 0;
         this.stateValue = 'spawning';
@@ -109,14 +118,51 @@ export class WaveManager {
 
     private createWaveConfig(waveNumber: number): WaveConfig {
         return {
-            enemyCount: 4 + waveNumber * 2,
+            powerBudget: this.options.basePowerBudget + (waveNumber - 1) * this.options.powerBudgetStep,
             spawnInterval: this.options.spawnInterval,
             hpMultiplier: 1 + (waveNumber - 1) * 0.15
         };
     }
 
+    private createEnemyQueue(waveNumber: number, powerBudget: number) {
+        const queue: EnemyType[] = [];
+        let remainingBudget = powerBudget;
+        let spentPower = 0;
+        let iteration = 0;
+        const maxIterations = 100;
+
+        while (iteration < maxIterations) {
+            iteration += 1;
+
+            const affordableWeights = this.getEnemyWeights(waveNumber).filter((item) => {
+                return ENEMY_DEFINITIONS[item.type].powerCost <= remainingBudget;
+            });
+
+            if (affordableWeights.length <= 0) {
+                break;
+            }
+
+            const type = this.pickWeightedEnemyType(affordableWeights);
+            const powerCost = ENEMY_DEFINITIONS[type].powerCost;
+            queue.push(type);
+            remainingBudget -= powerCost;
+            spentPower += powerCost;
+        }
+
+        if (DEBUG_WAVES) {
+            console.debug({
+                waveNumber,
+                powerBudget,
+                enemyQueue: queue,
+                spentPower
+            });
+        }
+
+        return queue;
+    }
+
     private updateSpawning(deltaMs: number) {
-        if (!this.activeConfig || this.enemiesLeftToSpawn <= 0) {
+        if (!this.activeConfig || this.enemyQueue.length <= 0) {
             this.stateValue = 'waitingForEnemies';
             this.completeWaveIfReady();
             return;
@@ -124,25 +170,30 @@ export class WaveManager {
 
         this.spawnTimerMs += deltaMs;
 
-        while (this.spawnTimerMs >= this.activeConfig.spawnInterval && this.enemiesLeftToSpawn > 0) {
+        while (this.spawnTimerMs >= this.activeConfig.spawnInterval && this.enemyQueue.length > 0) {
             this.spawnTimerMs -= this.activeConfig.spawnInterval;
             this.spawnOneEnemy();
         }
     }
 
     private spawnOneEnemy() {
-        if (!this.activeConfig || this.enemiesLeftToSpawn <= 0) {
+        if (!this.activeConfig || this.enemyQueue.length <= 0) {
             return;
         }
 
-        this.enemiesLeftToSpawn -= 1;
+        const type = this.enemyQueue.shift();
+
+        if (!type) {
+            return;
+        }
+
         this.aliveEnemies += 1;
         this.options.spawnEnemy({
-            type: this.selectEnemyType(this.waveNumber),
+            type,
             hpMultiplier: this.activeConfig.hpMultiplier
         });
 
-        if (this.enemiesLeftToSpawn <= 0) {
+        if (this.enemyQueue.length <= 0) {
             this.stateValue = 'waitingForEnemies';
             this.completeWaveIfReady();
         }
@@ -152,7 +203,7 @@ export class WaveManager {
         if (
             this.isRunCompleted ||
             (this.stateValue !== 'spawning' && this.stateValue !== 'waitingForEnemies') ||
-            this.enemiesLeftToSpawn > 0 ||
+            this.enemyQueue.length > 0 ||
             this.aliveEnemies > 0
         ) {
             return;
@@ -179,43 +230,43 @@ export class WaveManager {
         this.options.onRunCompleted?.();
     }
 
-    private selectEnemyType(waveNumber: number): EnemyType {
+    private getEnemyWeights(waveNumber: number): EnemyWeight[] {
         if (waveNumber <= 1) {
-            return this.pickWeightedEnemyType([
+            return [
                 { type: 'fastCar', weight: 100 }
-            ]);
+            ];
         }
 
         if (waveNumber === 2) {
-            return this.pickWeightedEnemyType([
+            return [
                 { type: 'fastCar', weight: 75 },
                 { type: 'drone', weight: 25 }
-            ]);
+            ];
         }
 
         if (waveNumber === 3) {
-            return this.pickWeightedEnemyType([
+            return [
                 { type: 'fastCar', weight: 60 },
                 { type: 'armoredCar', weight: 40 }
-            ]);
+            ];
         }
 
         if (waveNumber === 4) {
-            return this.pickWeightedEnemyType([
+            return [
                 { type: 'fastCar', weight: 45 },
                 { type: 'armoredCar', weight: 30 },
                 { type: 'drone', weight: 25 }
-            ]);
+            ];
         }
 
-        return this.pickWeightedEnemyType([
+        return [
             { type: 'fastCar', weight: 30 },
             { type: 'armoredCar', weight: 45 },
             { type: 'drone', weight: 25 }
-        ]);
+        ];
     }
 
-    private pickWeightedEnemyType(weights: Array<{ type: EnemyType; weight: number }>) {
+    private pickWeightedEnemyType(weights: EnemyWeight[]) {
         const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0);
         let roll = Math.random() * totalWeight;
 

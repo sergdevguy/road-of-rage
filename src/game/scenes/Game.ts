@@ -67,6 +67,8 @@ export class Game extends Scene {
             maxWaves: WAVES.max,
             spawnInterval: WAVES.spawnIntervalMs,
             betweenWaveDelay: WAVES.betweenWaveDelayMs,
+            basePowerBudget: WAVES.basePowerBudget,
+            powerBudgetStep: WAVES.powerBudgetStep,
             spawnEnemy: (options) => {
                 this.enemies.push(this.enemySpawner.spawnEnemy(options));
             },

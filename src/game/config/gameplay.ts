@@ -41,7 +41,9 @@ export const PLAYER = {
 export const WAVES = {
     max: 5,
     spawnIntervalMs: 1050,
-    betweenWaveDelayMs: 2000
+    betweenWaveDelayMs: 2000,
+    basePowerBudget: 50,
+    powerBudgetStep: 25
 };
 
 export const COLORS = {
