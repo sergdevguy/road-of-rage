@@ -14,6 +14,7 @@ import { BonusSelection } from '../ui/BonusSelection';
 import { Hud } from '../ui/Hud';
 
 type GameSpeed = 1 | 2 | 3;
+const BONUS_SELECTION_DELAY_MS = 500;
 
 export class Game extends Scene {
     private world: WorldRenderer;
@@ -33,8 +34,8 @@ export class Game extends Scene {
     private wave = 1;
     private isGameOver = false;
     private isPaused = false;
-    private isGameplayPaused = false;
     private speedMultiplier: GameSpeed = 1;
+    private bonusSelectionTimer: Phaser.Time.TimerEvent | null = null;
 
     constructor() {
         super('Game');
@@ -51,8 +52,8 @@ export class Game extends Scene {
         this.wave = 1;
         this.isGameOver = false;
         this.isPaused = false;
-        this.isGameplayPaused = false;
         this.speedMultiplier = 1;
+        this.bonusSelectionTimer = null;
     }
 
     create() {
@@ -88,7 +89,7 @@ export class Game extends Scene {
                 this.hud.showStatusMessage('ВОЛНА ЗАВЕРШЕНА', 1200);
             },
             onBonusChoiceRequested: () => {
-                this.showBonusSelection();
+                this.scheduleBonusSelection();
             },
             onRunCompleted: () => {
                 this.hud.showStatusMessage('ЗАБЕГ ЗАВЕРШЁН', 0);
@@ -111,22 +112,10 @@ export class Game extends Scene {
 
         this.hud.update(scaledDelta);
 
-        if (this.isGameplayPaused) {
-            this.refreshHud();
-            return;
-        }
-
         this.world.update(deltaSeconds);
         this.waveManager.update(scaledDelta);
 
         this.updateEnemies(deltaSeconds);
-
-        if (this.isGameplayPaused) {
-            this.cleanupDestroyed();
-            this.refreshHud();
-            return;
-        }
-
         this.updateWeapons(deltaSeconds);
         this.updateProjectiles(deltaSeconds);
         this.cleanupDestroyed();
@@ -273,6 +262,8 @@ export class Game extends Scene {
 
     private shutdownSystems() {
         this.waveManager?.destroy();
+        this.bonusSelectionTimer?.remove(false);
+        this.bonusSelectionTimer = null;
         this.bonusSelection?.hide();
 
         for (const enemy of this.enemies) {
@@ -287,12 +278,18 @@ export class Game extends Scene {
         this.projectiles = [];
     }
 
+    private scheduleBonusSelection() {
+        this.bonusSelectionTimer?.remove(false);
+        this.bonusSelectionTimer = this.time.delayedCall(BONUS_SELECTION_DELAY_MS, () => {
+            this.bonusSelectionTimer = null;
+            this.showBonusSelection();
+        });
+    }
+
     private showBonusSelection() {
-        this.isGameplayPaused = true;
         const choices = this.bonusManager.getChoices(3);
 
         if (choices.length <= 0) {
-            this.isGameplayPaused = false;
             this.waveManager.continueAfterBonus();
             return;
         }
@@ -303,7 +300,6 @@ export class Game extends Scene {
             this.truck.setHp(this.runState.currentHp, this.runState.maxHp);
             this.refreshHud();
             this.bonusSelection.hide();
-            this.isGameplayPaused = false;
             this.waveManager.continueAfterBonus();
         });
     }
