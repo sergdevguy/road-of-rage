@@ -4,14 +4,14 @@ export const GAME_HEIGHT = 720;
 export const WORLD = {
     roadY: GAME_HEIGHT / 2 + 30,
     roadHeight: 110,
-    scrollSpeed: 86
+    scrollSpeed: 116
 };
 
 export const TRUCK = {
     x: GAME_WIDTH / 2,
     y: WORLD.roadY,
     scale: 0.8,
-    maxHp: 1000,
+    maxHp: 10,
     collisionRadius: 61
 };
 
@@ -22,10 +22,10 @@ export const DRONE = {
 export const COMBAT = {
     turretRange: 330,
     turretFireDelay: 420,
-    turretDamage: 2,
+    turretDamage: 20,
     droneRange: 270,
     droneFireDelay: 680,
-    droneDamage: 1,
+    droneDamage: 10,
     projectileSpeed: 620
 };
 
