@@ -1,8 +1,20 @@
-import type { Scene } from 'phaser';
-import type { EnemyType } from '../config/enemies';
-import { COLORS, ENEMY, TRUCK } from '../config/gameplay';
-import type { Point, SpawnSide } from '../types';
-import { angleBetween, distanceSquared } from '../utils/math';
+import type { Scene } from 'phaser'
+import type { EnemyType } from '../config/enemies'
+import { COLORS, ENEMY, TRUCK } from '../config/gameplay'
+import type { Point, SpawnSide } from '../types'
+import { angleBetween, distanceSquared } from '../utils/math'
+
+export const ENEMY_TEXTURE_KEYS: Record<EnemyType, string> = {
+    fastCar: 'enemy-buggy',
+    armoredCar: 'enemy-kamikadze',
+    drone: 'enemy-drone'
+};
+
+const ENEMY_DISPLAY_HEIGHTS: Record<EnemyType, number> = {
+    fastCar: 52,
+    armoredCar: 72,
+    drone: 34
+};
 
 type EnemyOptions = {
     type: EnemyType;
@@ -45,18 +57,13 @@ export class Enemy {
         this.visual = scene.add.container(0, 0);
         this.container.add(this.visual);
 
-        if (options.type === 'fastCar') {
-            this.addFastCarVisual();
-        } else if (options.type === 'armoredCar') {
-            this.addArmoredCarVisual();
-        } else {
-            this.addDroneVisual();
-        }
+        this.addImageVisual(options.type);
 
         this.faceInitialDirection();
 
-        const healthBack = scene.add.rectangle(0, -28, 42, 5, 0x201915, 0.9);
-        this.healthFill = scene.add.rectangle(-20, -28, 40, 3, COLORS.danger);
+        const healthBarY = options.type === 'armoredCar' ? -28 : -24;
+        const healthBack = scene.add.rectangle(0, healthBarY, 42, 5, 0x201915, 0.9);
+        this.healthFill = scene.add.rectangle(-20, healthBarY, 40, 3, COLORS.danger);
         this.healthFill.setOrigin(0, 0.5);
         this.container.add([healthBack, this.healthFill]);
     }
@@ -140,58 +147,12 @@ export class Enemy {
         this.container.destroy();
     }
 
-    private addFastCarVisual() {
-        const shadow = this.scene.add.ellipse(2, 9, 46, 20, 0x000000, 0.3);
-        const body = this.scene.add.rectangle(0, 0, 42, 22, COLORS.enemy);
-        body.setStrokeStyle(3, COLORS.enemyDark);
-
-        const hood = this.scene.add.rectangle(13, 0, 14, 18, 0xf15b42);
-        const glass = this.scene.add.rectangle(-8, -1, 14, 14, 0x252d31, 0.95);
-        const stripe = this.scene.add.rectangle(-3, -8, 28, 3, 0xffc15f, 0.92);
-        const wheelA = this.scene.add.circle(-13, 13, 4, 0x101010);
-        const wheelB = this.scene.add.circle(13, 13, 4, 0x101010);
-        const light = this.scene.add.circle(21, -6, 3, 0xffd88a);
-
-        this.visual.add([shadow, body, hood, glass, stripe, wheelA, wheelB, light]);
-    }
-
-    private addArmoredCarVisual() {
-        const shadow = this.scene.add.ellipse(2, 13, 72, 32, 0x000000, 0.4);
-        const body = this.scene.add.rectangle(0, 0, 66, 34, 0x573c2d);
-        body.setStrokeStyle(4, 0x16120f);
-
-        const armorPlate = this.scene.add.rectangle(-7, 0, 36, 24, 0x7b6a50);
-        armorPlate.setStrokeStyle(2, 0x2a2118);
-
-        const ram = this.scene.add.triangle(34, 0, -8, -14, -8, 14, 10, 0, 0x8c2f24);
-        ram.setStrokeStyle(2, 0x2a100d);
-
-        const turret = this.scene.add.rectangle(-9, -19, 26, 5, 0x2b2924);
-        turret.setRotation(-0.24);
-
-        const wheelA = this.scene.add.circle(-22, 18, 6, 0x101010);
-        const wheelB = this.scene.add.circle(0, 18, 6, 0x101010);
-        const wheelC = this.scene.add.circle(22, 18, 6, 0x101010);
-        const light = this.scene.add.circle(34, -8, 3, 0xffd88a);
-
-        this.visual.add([shadow, body, armorPlate, ram, turret, wheelA, wheelB, wheelC, light]);
-    }
-
-    private addDroneVisual() {
-        const shadow = this.scene.add.ellipse(1, 12, 48, 18, 0x000000, 0.28);
-        const body = this.scene.add.circle(0, 0, 12, 0x293123);
-        body.setStrokeStyle(3, 0xa9c963);
-
-        const rotorA = this.scene.add.rectangle(0, 0, 54, 4, 0xd0d6bf, 0.82);
-        rotorA.setRotation(0.75);
-
-        const rotorB = this.scene.add.rectangle(0, 0, 54, 4, 0xd0d6bf, 0.82);
-        rotorB.setRotation(-0.75);
-
-        const nose = this.scene.add.triangle(17, 0, -8, -8, -8, 8, 10, 0, 0x9fc14d);
-        nose.setStrokeStyle(2, 0x2c3519);
-
-        this.visual.add([shadow, rotorA, rotorB, nose, body]);
+    private addImageVisual(type: EnemyType) {
+        const image = this.scene.add.image(0, 0, ENEMY_TEXTURE_KEYS[type]);
+        const displayHeight = ENEMY_DISPLAY_HEIGHTS[type];
+        image.setDisplaySize(displayHeight * (image.width / image.height), displayHeight);
+        image.setOrigin(0.5);
+        this.visual.add(image);
     }
 
     private faceInitialDirection() {
