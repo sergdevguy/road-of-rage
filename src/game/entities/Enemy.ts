@@ -2,7 +2,7 @@ import type { Scene } from 'phaser'
 import type { EnemyType } from '../config/enemies'
 import { COLORS, ENEMY, TRUCK } from '../config/gameplay'
 import type { Point, SpawnSide } from '../types'
-import { angleBetween, distanceSquared } from '../utils/math'
+import { distanceSquared } from '../utils/math'
 
 export const ENEMY_TEXTURE_KEYS: Record<EnemyType, string> = {
     fastCar: 'enemy-buggy',
@@ -168,7 +168,7 @@ export class Enemy {
             return;
         }
 
-        this.visual.rotation = angleBetween(this.position, target);
+        this.visual.rotation = 0;
     }
 
     private isSideViewEnemy() {

@@ -25,7 +25,7 @@ export const COMBAT = {
     turretDamage: 20,
     droneRange: 270,
     droneFireDelay: 680,
-    droneDamage: 10,
+    droneDamage: 30,
     projectileSpeed: 620
 };
 
@@ -39,7 +39,7 @@ export const PLAYER = {
 };
 
 export const WAVES = {
-    max: 5,
+    max: 10,
     spawnIntervalMs: 1050,
     betweenWaveDelayMs: 2000,
     basePowerBudget: 50,
