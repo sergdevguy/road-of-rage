@@ -1,6 +1,13 @@
-import type { Scene } from 'phaser';
-import type { BonusDefinition, BonusId } from '../config/bonuses';
-import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config/gameplay';
+import type { Scene } from 'phaser'
+import type { BonusDefinition, BonusId } from '../config/bonuses'
+import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config/gameplay'
+
+const CARD_WIDTH = 270;
+const CARD_HEIGHT = 200;
+const CARD_GAP = 20;
+const BOTTOM_OFFSET = 20;
+const TITLE_GAP = 30;
+const OVERLAY_PADDING = 20;
 
 export class BonusSelection {
     private readonly scene: Scene;
@@ -19,37 +26,37 @@ export class BonusSelection {
         container.setDepth(250);
         this.container = container;
 
-        const shade = this.scene.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x050705, 0.72);
-        shade.setOrigin(0);
+        const cardY = GAME_HEIGHT - BOTTOM_OFFSET - CARD_HEIGHT / 2;
+        const titleY = cardY - CARD_HEIGHT / 2 - TITLE_GAP;
+        const totalWidth = choices.length * CARD_WIDTH + Math.max(0, choices.length - 1) * CARD_GAP;
+        const overlayWidth = totalWidth + OVERLAY_PADDING * 2;
+        const overlayTop = titleY - 16 - OVERLAY_PADDING;
+        const overlayBottom = cardY + CARD_HEIGHT / 2 + OVERLAY_PADDING;
+        const overlay = this.scene.add.rectangle(
+            GAME_WIDTH / 2,
+            overlayTop + (overlayBottom - overlayTop) / 2,
+            overlayWidth,
+            overlayBottom - overlayTop,
+            0x050705,
+            0.72
+        );
+        overlay.setStrokeStyle(2, 0x2d3028, 0.8);
 
-        const title = this.scene.add.text(GAME_WIDTH / 2, 124, 'ВЫБЕРИ УЛУЧШЕНИЕ', {
+        const title = this.scene.add.text(GAME_WIDTH / 2, titleY, 'ВЫБЕРИ ОДНО УЛУЧШЕНИЕ', {
             fontFamily: 'Arial Black, Arial',
-            fontSize: '34px',
+            fontSize: '24px',
             color: '#f2eed9',
             stroke: '#050505',
-            strokeThickness: 5
+            strokeThickness: 4
         });
         title.setOrigin(0.5);
 
-        const subtitle = this.scene.add.text(GAME_WIDTH / 2, 164, 'ОДНА КАРТА ПЕРЕД СЛЕДУЮЩЕЙ ВОЛНОЙ', {
-            fontFamily: 'Arial, sans-serif',
-            fontSize: '17px',
-            color: '#c8c1a8',
-            stroke: '#050505',
-            strokeThickness: 3
-        });
-        subtitle.setOrigin(0.5);
+        container.add([overlay, title]);
 
-        container.add([shade, title, subtitle]);
-
-        const cardWidth = 270;
-        const cardHeight = 248;
-        const gap = 32;
-        const totalWidth = choices.length * cardWidth + Math.max(0, choices.length - 1) * gap;
-        const startX = GAME_WIDTH / 2 - totalWidth / 2 + cardWidth / 2;
+        const startX = GAME_WIDTH / 2 - totalWidth / 2 + CARD_WIDTH / 2;
 
         choices.forEach((choice, index) => {
-            this.createCard(startX + index * (cardWidth + gap), 374, cardWidth, cardHeight, choice, onSelect);
+            this.createCard(startX + index * (CARD_WIDTH + CARD_GAP), cardY, CARD_WIDTH, CARD_HEIGHT, choice, onSelect);
         });
     }
 
