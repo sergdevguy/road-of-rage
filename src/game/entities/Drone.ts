@@ -1,10 +1,10 @@
-import type { Scene } from 'phaser';
-import { COMBAT, DRONE } from '../config/gameplay';
-import type { Point } from '../types';
-import { angleBetween, distanceSquared, pointOnCircle } from '../utils/math';
-import { Enemy } from './Enemy';
-import { Projectile } from './Projectile';
-import { Truck } from './Truck';
+import type { Scene } from 'phaser'
+import { COMBAT, DRONE } from '../config/gameplay'
+import type { Point } from '../types'
+import { angleBetween, distanceSquared, pointOnCircle } from '../utils/math'
+import { Enemy } from './Enemy'
+import { Projectile } from './Projectile'
+import { Truck } from './Truck'
 
 export const PLAYER_DRONE_TEXTURE_KEY = 'player-drone';
 const PLAYER_DRONE_DISPLAY_HEIGHT = 42;

@@ -1,12 +1,21 @@
 import type { Scene } from 'phaser'
-import { COLORS, TRUCK } from '../config/gameplay'
+import { COLORS, TRUCK, WORLD } from '../config/gameplay'
 import type { Point } from '../types'
 
 export const TRUCK_TEXTURE_KEY = 'player-truck';
+export const TRUCK_WHEEL_TEXTURE_KEY = 'player-truck-wheel';
+
+const TRUCK_WHEEL_SIZE = 40;
+const TRUCK_WHEEL_SLOTS: Point[] = [
+    { x: -106, y: 42 },
+    { x: -64, y: 42 },
+    { x: 112, y: 42 }
+];
 
 export class Truck {
     private readonly container: Phaser.GameObjects.Container;
     private readonly healthFill: Phaser.GameObjects.Rectangle;
+    private readonly wheels: Phaser.GameObjects.Image[] = [];
 
     constructor(scene: Scene) {
         this.container = scene.add.container(TRUCK.x, TRUCK.y);
@@ -17,6 +26,15 @@ export class Truck {
         truckImage.setDisplaySize(330, 130);
         truckImage.setOrigin(0.5);
         this.container.add(truckImage);
+
+        for (const slot of TRUCK_WHEEL_SLOTS) {
+            const wheel = scene.add.image(slot.x, slot.y, TRUCK_WHEEL_TEXTURE_KEY);
+            wheel.setDisplaySize(TRUCK_WHEEL_SIZE, TRUCK_WHEEL_SIZE);
+            wheel.setOrigin(0.5);
+            this.wheels.push(wheel);
+        }
+
+        this.container.add(this.wheels);
 
         const healthBack = scene.add.rectangle(-8, -80, 118, 10, 0x26311f);
         healthBack.setStrokeStyle(2, 0x8da66d, 0.8);
@@ -46,6 +64,15 @@ export class Truck {
 
     setHp(hp: number, maxHp = TRUCK.maxHp) {
         this.healthFill.scaleX = Math.max(0, hp / maxHp);
+    }
+
+    update(deltaSeconds: number) {
+        const worldWheelRadius = (TRUCK_WHEEL_SIZE * TRUCK.scale) / 2;
+        const rotationDelta = WORLD.scrollSpeed * deltaSeconds / worldWheelRadius;
+
+        for (const wheel of this.wheels) {
+            wheel.rotation += rotationDelta;
+        }
     }
 
     hardpoints(): Point[] {

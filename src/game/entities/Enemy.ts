@@ -11,9 +11,9 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyType, string> = {
 };
 
 const ENEMY_DISPLAY_HEIGHTS: Record<EnemyType, number> = {
-    fastCar: 52,
-    armoredCar: 72,
-    drone: 34
+    fastCar: 50,
+    armoredCar: 74,
+    drone: 32
 };
 
 type EnemyOptions = {

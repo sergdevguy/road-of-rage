@@ -4,7 +4,7 @@ import { WAVE_TYPE_LABELS } from '../config/waves';
 import { Drone, PLAYER_DRONE_TEXTURE_KEY } from '../entities/Drone';
 import { Enemy, ENEMY_TEXTURE_KEYS } from '../entities/Enemy';
 import { Projectile } from '../entities/Projectile';
-import { Truck, TRUCK_TEXTURE_KEY } from '../entities/Truck';
+import { Truck, TRUCK_TEXTURE_KEY, TRUCK_WHEEL_TEXTURE_KEY } from '../entities/Truck';
 import { Turret } from '../entities/Turret';
 import { WorldRenderer } from '../rendering/WorldRenderer';
 import { EnemySpawner } from '../spawners/EnemySpawner';
@@ -43,6 +43,7 @@ export class Game extends Scene {
 
     preload() {
         this.load.image(TRUCK_TEXTURE_KEY, 'assets/images/hero/truck.png');
+        this.load.image(TRUCK_WHEEL_TEXTURE_KEY, 'assets/images/hero/truck-wheel.png');
         this.load.image(PLAYER_DRONE_TEXTURE_KEY, 'assets/images/hero/drone.png');
         this.load.image(ENEMY_TEXTURE_KEYS.fastCar, 'assets/images/enemys/buggy.png');
         this.load.image(ENEMY_TEXTURE_KEYS.armoredCar, 'assets/images/enemys/kamikadze.png');
@@ -121,6 +122,7 @@ export class Game extends Scene {
         this.hud.update(scaledDelta);
 
         this.world.update(deltaSeconds);
+        this.truck.update(deltaSeconds);
         this.waveManager.update(scaledDelta);
 
         this.updateEnemies(deltaSeconds);
