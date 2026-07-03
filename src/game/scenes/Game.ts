@@ -1,10 +1,10 @@
 import { Scene } from 'phaser';
 import { COMBAT, GAME_HEIGHT, GAME_WIDTH, PLAYER, TRUCK, WAVES } from '../config/gameplay';
 import { WAVE_TYPE_LABELS } from '../config/waves';
-import { Drone } from '../entities/Drone';
+import { Drone, PLAYER_DRONE_TEXTURE_KEY } from '../entities/Drone';
 import { Enemy } from '../entities/Enemy';
 import { Projectile } from '../entities/Projectile';
-import { Truck } from '../entities/Truck';
+import { Truck, TRUCK_TEXTURE_KEY } from '../entities/Truck';
 import { Turret } from '../entities/Turret';
 import { WorldRenderer } from '../rendering/WorldRenderer';
 import { EnemySpawner } from '../spawners/EnemySpawner';
@@ -39,6 +39,11 @@ export class Game extends Scene {
 
     constructor() {
         super('Game');
+    }
+
+    preload() {
+        this.load.image(TRUCK_TEXTURE_KEY, 'assets/truck.png');
+        this.load.image(PLAYER_DRONE_TEXTURE_KEY, 'assets/drone.png');
     }
 
     init() {

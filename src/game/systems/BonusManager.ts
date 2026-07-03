@@ -1,4 +1,4 @@
-import { BONUS_DEFINITIONS, type BonusDefinition, type BonusId } from '../config/bonuses';
+import { BONUS_DEFINITIONS, type BonusDefinition, type BonusId } from '../config/bonuses'
 
 const DEBUG_BONUSES = false;
 
