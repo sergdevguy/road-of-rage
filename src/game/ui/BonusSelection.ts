@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser'
 import type { BonusDefinition, BonusId } from '../config/bonuses'
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config/gameplay'
+import { AudioManager } from '../systems/AudioManager'
 
 const CARD_WIDTH = 270;
 const CARD_HEIGHT = 200;
@@ -144,6 +145,7 @@ export class BonusSelection {
             }
 
             this.isLocked = true;
+            AudioManager.playSfx(this.scene, 'uiButton');
             back.disableInteractive();
             onSelect(choice.id);
         });

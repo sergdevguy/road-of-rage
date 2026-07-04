@@ -10,6 +10,7 @@ import { Turret } from '../entities/Turret';
 import { WorldRenderer } from '../rendering/WorldRenderer';
 import { EnemySpawner } from '../spawners/EnemySpawner';
 import { BonusManager, type RunUpgradeState } from '../systems/BonusManager';
+import { AudioManager } from '../systems/AudioManager';
 import { WaveManager } from '../systems/WaveManager';
 import { BonusSelection } from '../ui/BonusSelection';
 import { Hud } from '../ui/Hud';
@@ -43,6 +44,7 @@ export class Game extends Scene {
     }
 
     preload() {
+        AudioManager.preload(this);
         this.load.image(TRUCK_TEXTURE_KEY, 'assets/images/hero/truck.png');
         this.load.image(TRUCK_WHEEL_TEXTURE_KEY, 'assets/images/hero/truck-wheel.png');
         this.load.image(PLAYER_DRONE_TEXTURE_KEY, 'assets/images/hero/drone.png');
@@ -71,6 +73,7 @@ export class Game extends Scene {
     }
 
     create() {
+        AudioManager.playMusic(this, 'mainTheme');
         this.world = new WorldRenderer(this);
         Explosion.createAnimation(this);
         this.truck = new Truck(this);
@@ -161,6 +164,7 @@ export class Game extends Scene {
             const damage = enemy.update(deltaSeconds, this.truck.position);
 
             if (damage > 0) {
+                AudioManager.playSfx(this, 'takeDamage');
                 this.runState.currentHp -= damage;
                 this.truck.setHp(this.runState.currentHp, this.runState.maxHp);
                 this.handleEnemyRemoved(enemy, true);
@@ -316,6 +320,7 @@ export class Game extends Scene {
 
         this.bonusSelection.show(choices, (bonusId) => {
             this.bonusManager.applyBonus(bonusId);
+            AudioManager.playSfx(this, 'takeBonus');
             this.syncLoadout();
             this.truck.setHp(this.runState.currentHp, this.runState.maxHp);
             this.refreshHud();

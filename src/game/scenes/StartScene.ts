@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config/gameplay';
+import { AudioManager } from '../systems/AudioManager';
 
 type MenuButton = {
     back: Phaser.GameObjects.Rectangle;
@@ -14,6 +15,10 @@ export class StartScene extends Scene {
         super('StartScene');
     }
 
+    preload() {
+        AudioManager.preload(this);
+    }
+
     create() {
         this.addWastelandBackground();
         this.addTitle();
@@ -21,8 +26,8 @@ export class StartScene extends Scene {
         this.addMainButtons();
         this.addCornerButtons();
 
-        this.input.keyboard?.on('keydown-ENTER', () => this.startGame());
-        this.input.keyboard?.on('keydown-SPACE', () => this.startGame());
+        this.input.keyboard?.on('keydown-ENTER', () => this.startGameWithSound());
+        this.input.keyboard?.on('keydown-SPACE', () => this.startGameWithSound());
     }
 
     private addWastelandBackground() {
@@ -198,9 +203,10 @@ export class StartScene extends Scene {
         back.on('pointerover', () => this.setButtonHover(button, true, isPrimary));
         back.on('pointerout', () => this.setButtonHover(button, false, isPrimary));
 
-        if (onClick) {
-            back.on('pointerdown', onClick);
-        }
+        back.on('pointerdown', () => {
+            AudioManager.playSfx(this, 'uiButton');
+            onClick?.();
+        });
     }
 
     private setButtonHover(button: MenuButton, isHovering: boolean, isPrimary: boolean) {
@@ -226,6 +232,7 @@ export class StartScene extends Scene {
         back.setStrokeStyle(3, 0x68685a, 0.9);
         back.setDepth(42);
         back.setInteractive({ useHandCursor: true });
+        back.on('pointerdown', () => AudioManager.playSfx(this, 'uiButton'));
 
         this.add.text(x, y, icon, {
             fontFamily: 'Arial Black, Arial',
@@ -241,6 +248,7 @@ export class StartScene extends Scene {
         back.setStrokeStyle(3, 0x68685a, 0.9);
         back.setDepth(42);
         back.setInteractive({ useHandCursor: true });
+        back.on('pointerdown', () => AudioManager.playSfx(this, 'uiButton'));
 
         this.add.text(x, y - 12, icon, {
             fontFamily: 'Arial Black, Arial',
@@ -261,6 +269,11 @@ export class StartScene extends Scene {
 
     private startGame() {
         this.scene.start('Game');
+    }
+
+    private startGameWithSound() {
+        AudioManager.playSfx(this, 'uiButton');
+        this.startGame();
     }
 
     private addTruck(x: number, y: number, scale: number) {

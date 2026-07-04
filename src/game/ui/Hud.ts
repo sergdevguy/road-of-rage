@@ -1,5 +1,6 @@
 import type { Scene } from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, WAVES } from '../config/gameplay';
+import { AudioManager } from '../systems/AudioManager';
 
 type HudButton = {
     back: Phaser.GameObjects.Rectangle;
@@ -209,12 +210,17 @@ export class Hud {
 
         back.on('pointerover', () => this.setControlHover(button, true));
         back.on('pointerout', () => this.setControlHover(button, false));
-        back.on('pointerdown', onClick);
+        const handleClick = () => {
+            AudioManager.playSfx(this.scene, 'uiButton');
+            onClick();
+        };
+
+        back.on('pointerdown', handleClick);
 
         text.setInteractive({ useHandCursor: true });
         text.on('pointerover', () => this.setControlHover(button, true));
         text.on('pointerout', () => this.setControlHover(button, false));
-        text.on('pointerdown', onClick);
+        text.on('pointerdown', handleClick);
 
         return button;
     }

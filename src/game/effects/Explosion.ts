@@ -1,5 +1,6 @@
 import type { Scene } from 'phaser';
 import type { Point } from '../types';
+import { AudioManager } from '../systems/AudioManager';
 
 export const EXPLOSION_TEXTURE_KEY = 'explosion';
 const EXPLOSION_ANIMATION_KEY = 'explosion-play';
@@ -26,6 +27,7 @@ export class Explosion {
     }
 
     constructor(scene: Scene, position: Point, displayHeight: number) {
+        AudioManager.playSfx(scene, 'enemyExplosion');
         const sprite = scene.add.sprite(position.x, position.y, EXPLOSION_TEXTURE_KEY);
         const explosionHeight = displayHeight * EXPLOSION_SCALE_MULTIPLIER;
         sprite.setDepth(55);

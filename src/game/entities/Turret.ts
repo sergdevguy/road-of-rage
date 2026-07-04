@@ -5,6 +5,7 @@ import { angleBetween, distanceSquared, pointOnCircle } from '../utils/math';
 import { Enemy } from './Enemy';
 import { Projectile } from './Projectile';
 import { Truck } from './Truck';
+import { AudioManager } from '../systems/AudioManager';
 
 type TurretStats = {
     damage: number;
@@ -59,6 +60,7 @@ export class Turret {
 
         const stats = this.statsProvider();
         this.cooldownMs = stats.fireDelay;
+        AudioManager.playSfx(this.scene, 'turretShot');
         this.flash(position, angle);
 
         return new Projectile(

@@ -2,6 +2,7 @@ import type { Scene } from 'phaser';
 import { ENEMY_DEFINITIONS, type EnemyType } from '../config/enemies';
 import { GAME_HEIGHT, GAME_WIDTH } from '../config/gameplay';
 import { Enemy } from '../entities/Enemy';
+import { AudioManager } from '../systems/AudioManager';
 import type { Point, SpawnSide } from '../types';
 
 type SpawnEnemyOptions = {
@@ -21,7 +22,7 @@ export class EnemySpawner {
         const side = this.pickSpawnSide(options.type);
         const position = this.spawnPosition(side);
 
-        return new Enemy(this.scene, {
+        const enemy = new Enemy(this.scene, {
             type: definition.type,
             position,
             spawnSide: side,
@@ -30,6 +31,10 @@ export class EnemySpawner {
             damage: definition.damage,
             reward: definition.reward
         });
+
+        AudioManager.playSfx(this.scene, this.spawnSoundKey(options.type));
+
+        return enemy;
     }
 
     private pickSpawnSide(type: EnemyType): SpawnSide {
@@ -62,5 +67,17 @@ export class EnemySpawner {
 
     private randomBetween(min: number, max: number) {
         return min + Math.random() * (max - min);
+    }
+
+    private spawnSoundKey(type: EnemyType) {
+        if (type === 'fastCar') {
+            return 'fastCarSpawn';
+        }
+
+        if (type === 'armoredCar') {
+            return 'armoredCarSpawn';
+        }
+
+        return 'droneSpawn';
     }
 }

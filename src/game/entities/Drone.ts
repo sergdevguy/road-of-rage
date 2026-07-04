@@ -5,6 +5,7 @@ import { angleBetween, distanceSquared, pointOnCircle } from '../utils/math'
 import { Enemy } from './Enemy'
 import { Projectile } from './Projectile'
 import { Truck } from './Truck'
+import { AudioManager } from '../systems/AudioManager'
 
 export const PLAYER_DRONE_TEXTURE_KEY = 'player-drone';
 const PLAYER_DRONE_DISPLAY_HEIGHT = 42;
@@ -68,6 +69,7 @@ export class Drone {
 
         const stats = this.statsProvider();
         this.cooldownMs = stats.fireDelay;
+        AudioManager.playSfx(this.scene, 'droneShot');
 
         return new Projectile(
             this.scene,
