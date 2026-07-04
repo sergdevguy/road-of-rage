@@ -84,6 +84,10 @@ export class Enemy {
         return this.rewardValue;
     }
 
+    get displayHeight() {
+        return ENEMY_DISPLAY_HEIGHTS[this.enemyType];
+    }
+
     update(deltaSeconds: number, target: Point) {
         if (this.destroyed) {
             return 0;

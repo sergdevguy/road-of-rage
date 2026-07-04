@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import { COMBAT, GAME_HEIGHT, GAME_WIDTH, PLAYER, TRUCK, WAVES } from '../config/gameplay';
 import { WAVE_TYPE_LABELS } from '../config/waves';
+import { Explosion, EXPLOSION_TEXTURE_KEY } from '../effects/Explosion';
 import { Drone, PLAYER_DRONE_TEXTURE_KEY } from '../entities/Drone';
 import { Enemy, ENEMY_TEXTURE_KEYS } from '../entities/Enemy';
 import { Projectile } from '../entities/Projectile';
@@ -48,6 +49,10 @@ export class Game extends Scene {
         this.load.image(ENEMY_TEXTURE_KEYS.fastCar, 'assets/images/enemys/buggy.png');
         this.load.image(ENEMY_TEXTURE_KEYS.armoredCar, 'assets/images/enemys/kamikadze.png');
         this.load.image(ENEMY_TEXTURE_KEYS.drone, 'assets/images/enemys/drone.png');
+        this.load.spritesheet(EXPLOSION_TEXTURE_KEY, 'assets/images/explosion.png', {
+            frameWidth: 64,
+            frameHeight: 66
+        });
     }
 
     init() {
@@ -67,6 +72,7 @@ export class Game extends Scene {
 
     create() {
         this.world = new WorldRenderer(this);
+        Explosion.createAnimation(this);
         this.truck = new Truck(this);
         this.hud = new Hud(this, {
             onTogglePause: () => this.togglePause(),
@@ -176,8 +182,12 @@ export class Game extends Scene {
                     continue;
                 }
 
+                const explosionPosition = enemy.position;
+                const explosionHeight = enemy.displayHeight;
+
                 if (enemy.takeDamage(projectile.damage)) {
                     this.gold += enemy.reward;
+                    new Explosion(this, explosionPosition, explosionHeight);
                     this.handleEnemyRemoved(enemy, false);
                 }
 
