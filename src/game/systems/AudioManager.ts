@@ -1,10 +1,12 @@
-import type { Scene } from 'phaser';
+import type { Scene } from 'phaser'
 import {
     AUDIO_DEFINITIONS,
     DEFAULT_AUDIO_SETTINGS,
     type AudioKey,
     type AudioSettings
-} from '../config/audio';
+} from '../config/audio'
+
+const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
 class GameAudioManager {
     private settings: AudioSettings = {
@@ -140,7 +142,7 @@ class GameAudioManager {
             : this.settings.sfxVolume;
         const soundVolume = this.settings.perSoundVolume[key] ?? 1;
 
-        return Phaser.Math.Clamp(definition.defaultVolume * categoryVolume * soundVolume, 0, 1);
+        return clamp01(definition.defaultVolume * categoryVolume * soundVolume);
     }
 
     private setSoundVolume(sound: Phaser.Sound.BaseSound, volume: number) {

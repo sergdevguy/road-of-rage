@@ -5,7 +5,7 @@ import type { Point } from '../types'
 export const TRUCK_TEXTURE_KEY = 'player-truck';
 export const TRUCK_WHEEL_TEXTURE_KEY = 'player-truck-wheel';
 
-const TRUCK_WHEEL_SIZE = 40;
+const TRUCK_WHEEL_SIZE = 36;
 const TRUCK_WHEEL_SLOTS: Point[] = [
     { x: -106, y: 42 },
     { x: -64, y: 42 },
