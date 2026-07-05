@@ -18,6 +18,11 @@ import { Hud } from '../ui/Hud';
 type GameSpeed = 1 | 2 | 3;
 const BONUS_SELECTION_DELAY_MS = 500;
 
+type EnemyRemovalOptions = {
+    destroyEnemy: boolean;
+    explode: boolean;
+};
+
 export class Game extends Scene {
     private world: WorldRenderer;
     private truck: Truck;
@@ -175,7 +180,10 @@ export class Game extends Scene {
                 AudioManager.playSfx(this, 'takeDamage');
                 this.runState.currentHp -= damage;
                 this.truck.setHp(this.runState.currentHp, this.runState.maxHp);
-                this.handleEnemyRemoved(enemy, true);
+                this.handleEnemyRemoved(enemy, {
+                    destroyEnemy: true,
+                    explode: true
+                });
 
                 if (this.runState.currentHp <= 0) {
                     this.gameOver();
@@ -194,13 +202,12 @@ export class Game extends Scene {
                     continue;
                 }
 
-                const explosionPosition = enemy.position;
-                const explosionHeight = enemy.displayHeight;
-
                 if (enemy.takeDamage(projectile.damage)) {
                     this.gold += enemy.reward;
-                    new Explosion(this, explosionPosition, explosionHeight);
-                    this.handleEnemyRemoved(enemy, false);
+                    this.handleEnemyRemoved(enemy, {
+                        destroyEnemy: false,
+                        explode: true
+                    });
                 }
 
                 projectile.destroy();
@@ -225,14 +232,18 @@ export class Game extends Scene {
         this.projectiles = activeProjectiles;
     }
 
-    private handleEnemyRemoved(enemy: Enemy, shouldDestroy: boolean) {
+    private handleEnemyRemoved(enemy: Enemy, options: EnemyRemovalOptions) {
         if (this.removedEnemies.has(enemy)) {
             return;
         }
 
         this.removedEnemies.add(enemy);
 
-        if (shouldDestroy) {
+        if (options.explode) {
+            new Explosion(this, enemy.position, enemy.displayHeight);
+        }
+
+        if (options.destroyEnemy) {
             enemy.destroy();
         }
 

@@ -26,10 +26,10 @@ export const DRONE = {
 export const COMBAT = {
     turretRange: 330,
     turretFireDelay: 420,
-    turretDamage: 20,
+    turretDamage: 25,
     droneRange: 270,
     droneFireDelay: 680,
-    droneDamage: 30,
+    droneDamage: 35,
     projectileSpeed: 620
 };
 
@@ -52,7 +52,7 @@ export const WAVES = {
 };
 
 export const DEBUG = {
-    showHitboxes: true
+    showHitboxes: false
 };
 
 export const COLORS = {

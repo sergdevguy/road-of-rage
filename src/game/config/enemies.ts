@@ -35,7 +35,7 @@ export const ENEMY_DEFINITIONS: Record<EnemyType, EnemyDefinition> = {
     },
     armoredCar: {
         type: 'armoredCar',
-        maxHp: 100,
+        maxHp: 70,
         speed: 130,
         damage: 2,
         reward: 12,

@@ -36,7 +36,7 @@ export const AUDIO_DEFINITIONS: Record<AudioKey, AudioDefinition> = {
         assetKey: 'audio-main-theme',
         path: 'assets/sounds/music/main-theme.mp3',
         category: 'music',
-        defaultVolume: 0.42,
+        defaultVolume: 0.52,
         loop: true
     },
     uiButton: {
@@ -44,7 +44,7 @@ export const AUDIO_DEFINITIONS: Record<AudioKey, AudioDefinition> = {
         assetKey: 'audio-ui-button',
         path: 'assets/sounds/ui/button.wav',
         category: 'sfx',
-        defaultVolume: 0.55,
+        defaultVolume: 0.50,
         cooldownMs: 70
     },
     fastCarSpawn: {
@@ -52,28 +52,28 @@ export const AUDIO_DEFINITIONS: Record<AudioKey, AudioDefinition> = {
         assetKey: 'audio-fastcar-spawn',
         path: 'assets/sounds/enemy/fastcar-spawn.mp3',
         category: 'sfx',
-        defaultVolume: 0.34
+        defaultVolume: 0.3
     },
     armoredCarSpawn: {
         key: 'armoredCarSpawn',
         assetKey: 'audio-armoredcar-spawn',
         path: 'assets/sounds/enemy/armoredcar-spawn.mp3',
         category: 'sfx',
-        defaultVolume: 0.36
+        defaultVolume: 0.3
     },
     droneSpawn: {
         key: 'droneSpawn',
         assetKey: 'audio-drone-spawn',
         path: 'assets/sounds/enemy/drone-spawn.mp3',
         category: 'sfx',
-        defaultVolume: 0.34
+        defaultVolume: 0.3
     },
     enemyExplosion: {
         key: 'enemyExplosion',
         assetKey: 'audio-enemy-explosion',
         path: 'assets/sounds/enemy/explosion.wav',
         category: 'sfx',
-        defaultVolume: 0.52,
+        defaultVolume: 0.6,
         cooldownMs: 60
     },
     turretShot: {
@@ -81,7 +81,7 @@ export const AUDIO_DEFINITIONS: Record<AudioKey, AudioDefinition> = {
         assetKey: 'audio-turret-shot',
         path: 'assets/sounds/hero/turret-shot.wav',
         category: 'sfx',
-        defaultVolume: 0.34,
+        defaultVolume: 0.3,
         cooldownMs: 45
     },
     droneShot: {
@@ -97,7 +97,7 @@ export const AUDIO_DEFINITIONS: Record<AudioKey, AudioDefinition> = {
         assetKey: 'audio-take-bonus',
         path: 'assets/sounds/hero/take-bonus.wav',
         category: 'sfx',
-        defaultVolume: 0.56
+        defaultVolume: 0.5
     },
     takeDamage: {
         key: 'takeDamage',
