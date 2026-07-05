@@ -15,7 +15,7 @@ export type EnemyDefinition = {
 export const ENEMY_DEFINITIONS: Record<EnemyType, EnemyDefinition> = {
     fastCar: {
         type: 'fastCar',
-        maxHp: 30,
+        maxHp: 300,
         speed: 220,
         damage: 1,
         reward: 5,
@@ -23,8 +23,8 @@ export const ENEMY_DEFINITIONS: Record<EnemyType, EnemyDefinition> = {
     },
     armoredCar: {
         type: 'armoredCar',
-        maxHp: 100,
-        speed: 90,
+        maxHp: 10000,
+        speed: 130,
         damage: 2,
         reward: 12,
         powerCost: 30

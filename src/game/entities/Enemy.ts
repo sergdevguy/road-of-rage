@@ -12,13 +12,13 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyType, string> = {
 
 const ENEMY_DISPLAY_HEIGHTS: Record<EnemyType, number> = {
     fastCar: 50,
-    armoredCar: 74,
+    armoredCar: 82,
     drone: 32
 };
 
 const ENEMY_SHADOWS: Record<EnemyType, { x: number; y: number; width: number; height: number; alpha: number }> = {
     fastCar: { x: 0, y: 15, width: 72, height: 18, alpha: 0.3 },
-    armoredCar: { x: 0, y: 24, width: 92, height: 24, alpha: 0.34 },
+    armoredCar: { x: 0, y: 27, width: 102, height: 27, alpha: 0.34 },
     drone: { x: -10, y: 50, width: 36, height: 14, alpha: 0.24 }
 };
 

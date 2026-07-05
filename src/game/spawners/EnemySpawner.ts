@@ -1,6 +1,6 @@
 import type { Scene } from 'phaser';
 import { ENEMY_DEFINITIONS, type EnemyType } from '../config/enemies';
-import { GAME_HEIGHT, GAME_WIDTH } from '../config/gameplay';
+import { GAME_HEIGHT, GAME_WIDTH, TRUCK } from '../config/gameplay';
 import { Enemy } from '../entities/Enemy';
 import { AudioManager } from '../systems/AudioManager';
 import type { Point, SpawnSide } from '../types';
@@ -20,7 +20,7 @@ export class EnemySpawner {
     spawnEnemy(options: SpawnEnemyOptions) {
         const definition = ENEMY_DEFINITIONS[options.type];
         const side = this.pickSpawnSide(options.type);
-        const position = this.spawnPosition(side);
+        const position = this.spawnPosition(side, options.type);
 
         const enemy = new Enemy(this.scene, {
             type: definition.type,
@@ -49,12 +49,16 @@ export class EnemySpawner {
         return Math.random() < 0.5 ? 'top' : 'bottom';
     }
 
-    private spawnPosition(side: SpawnSide): Point {
+    private spawnPosition(side: SpawnSide, type: EnemyType): Point {
         if (side === 'left') {
             return { x: -70, y: this.randomBetween(360, 520) };
         }
 
         if (side === 'right') {
+            if (type === 'armoredCar') {
+                return { x: GAME_WIDTH + 70, y: this.randomBetween(TRUCK.y - 18, TRUCK.y + 18) };
+            }
+
             return { x: GAME_WIDTH + 70, y: this.randomBetween(250, 610) };
         }
 
