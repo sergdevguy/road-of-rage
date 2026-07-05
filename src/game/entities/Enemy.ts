@@ -45,6 +45,7 @@ export class Enemy {
     private readonly speed: number;
     private readonly damage: number;
     private readonly rewardValue: number;
+    private readonly positionValue: Point;
     private hp: number;
     private attackCooldownMs = 0;
     private destroyed = false;
@@ -58,7 +59,8 @@ export class Enemy {
         this.speed = options.speed;
         this.damage = options.damage;
         this.rewardValue = options.reward;
-        this.container = scene.add.container(options.position.x, options.position.y);
+        this.positionValue = { ...options.position };
+        this.container = scene.add.container(Math.round(options.position.x), Math.round(options.position.y));
         this.container.setDepth(15);
         this.visual = scene.add.container(0, 0);
         const shadowConfig = ENEMY_SHADOWS[options.type];
@@ -84,11 +86,11 @@ export class Enemy {
     }
 
     get x() {
-        return this.container.x;
+        return this.positionValue.x;
     }
 
     get y() {
-        return this.container.y;
+        return this.positionValue.y;
     }
 
     get position(): Point {
@@ -118,8 +120,9 @@ export class Enemy {
         this.updateFacing(target);
 
         if (dist > attackDistance) {
-            this.container.x += (dx / dist) * this.speed * deltaSeconds;
-            this.container.y += (dy / dist) * this.speed * deltaSeconds;
+            this.positionValue.x += (dx / dist) * this.speed * deltaSeconds;
+            this.positionValue.y += (dy / dist) * this.speed * deltaSeconds;
+            this.syncRenderPosition();
             return 0;
         }
 
@@ -169,9 +172,13 @@ export class Enemy {
     private addImageVisual(type: EnemyType) {
         const image = this.scene.add.image(0, 0, ENEMY_TEXTURE_KEYS[type]);
         const displayHeight = ENEMY_DISPLAY_HEIGHTS[type];
-        image.setDisplaySize(displayHeight * (image.width / image.height), displayHeight);
+        image.setDisplaySize(Math.round(displayHeight * (image.width / image.height)), displayHeight);
         image.setOrigin(0.5);
         this.visual.add(image);
+    }
+
+    private syncRenderPosition() {
+        this.container.setPosition(Math.round(this.positionValue.x), Math.round(this.positionValue.y));
     }
 
     private faceInitialDirection() {
