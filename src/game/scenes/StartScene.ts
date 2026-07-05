@@ -80,7 +80,7 @@ export class StartScene extends Scene {
 
         this.createMenuButton(
             GAME_WIDTH / 2,
-            600,
+            580,
             MENU_ASSETS.improvementsButton,
             'УЛУЧШЕНИЯ'
         );
@@ -97,14 +97,14 @@ export class StartScene extends Scene {
         image.setOrigin(0.5);
         image.setDepth(20);
         image.setInteractive({ useHandCursor: true });
-        image.setScale(0.8);
+        image.setScale(0.60);
 
         const text = this.add.text(x, y, label, {
             fontFamily: 'Arial Black, Arial',
-            fontSize: label === 'ИГРАТЬ' ? '34px' : '28px',
+            fontSize: label === 'ИГРАТЬ' ? '28px' : '22px',
             color: '#f2eed9',
             stroke: '#111111',
-            strokeThickness: 5
+            strokeThickness: 4
         });
         text.setOrigin(0.5);
         text.setDepth(21);
@@ -123,7 +123,7 @@ export class StartScene extends Scene {
     }
 
     private setButtonHover(button: MenuButton, isHovering: boolean) {
-        const buttonScale = isHovering ? 0.84 : 0.80;
+        const buttonScale = isHovering ? 0.64 : 0.60;
         const labelScale = isHovering ? 1.04 : 1.0;
         button.image.setScale(buttonScale);
         button.label.setScale(labelScale);
