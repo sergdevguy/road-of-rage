@@ -11,6 +11,13 @@ const TRUCK_WHEEL_SLOTS: Point[] = [
     { x: -64, y: 42 },
     { x: 112, y: 42 }
 ];
+const TRUCK_SHADOW = {
+    x: 0,
+    y: 44,
+    width: 310,
+    height: 36,
+    alpha: 0.34
+};
 
 export class Truck {
     private readonly container: Phaser.GameObjects.Container;
@@ -22,10 +29,19 @@ export class Truck {
         this.container.setDepth(20);
         this.container.setScale(TRUCK.scale);
 
+        const shadow = scene.add.ellipse(
+            TRUCK_SHADOW.x,
+            TRUCK_SHADOW.y,
+            TRUCK_SHADOW.width,
+            TRUCK_SHADOW.height,
+            0x050505,
+            TRUCK_SHADOW.alpha
+        );
+
         const truckImage = scene.add.image(0, 0, TRUCK_TEXTURE_KEY);
         truckImage.setDisplaySize(330, 130);
         truckImage.setOrigin(0.5);
-        this.container.add(truckImage);
+        this.container.add([shadow, truckImage]);
 
         for (const slot of TRUCK_WHEEL_SLOTS) {
             const wheel = scene.add.image(slot.x, slot.y, TRUCK_WHEEL_TEXTURE_KEY);

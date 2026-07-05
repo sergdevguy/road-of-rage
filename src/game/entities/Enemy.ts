@@ -16,6 +16,12 @@ const ENEMY_DISPLAY_HEIGHTS: Record<EnemyType, number> = {
     drone: 32
 };
 
+const ENEMY_SHADOWS: Record<EnemyType, { x: number; y: number; width: number; height: number; alpha: number }> = {
+    fastCar: { x: 0, y: 15, width: 72, height: 18, alpha: 0.3 },
+    armoredCar: { x: 0, y: 24, width: 92, height: 24, alpha: 0.34 },
+    drone: { x: -10, y: 50, width: 36, height: 14, alpha: 0.24 }
+};
+
 type EnemyOptions = {
     type: EnemyType;
     position: Point;
@@ -55,7 +61,16 @@ export class Enemy {
         this.container = scene.add.container(options.position.x, options.position.y);
         this.container.setDepth(15);
         this.visual = scene.add.container(0, 0);
-        this.container.add(this.visual);
+        const shadowConfig = ENEMY_SHADOWS[options.type];
+        const shadow = scene.add.ellipse(
+            shadowConfig.x,
+            shadowConfig.y,
+            shadowConfig.width,
+            shadowConfig.height,
+            0x050505,
+            shadowConfig.alpha
+        );
+        this.container.add([shadow, this.visual]);
 
         this.addImageVisual(options.type);
 

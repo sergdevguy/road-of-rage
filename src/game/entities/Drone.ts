@@ -1,14 +1,21 @@
 import type { Scene } from 'phaser'
 import { COMBAT, DRONE } from '../config/gameplay'
+import { AudioManager } from '../systems/AudioManager'
 import type { Point } from '../types'
 import { angleBetween, distanceSquared, pointOnCircle } from '../utils/math'
 import { Enemy } from './Enemy'
 import { Projectile } from './Projectile'
 import { Truck } from './Truck'
-import { AudioManager } from '../systems/AudioManager'
 
 export const PLAYER_DRONE_TEXTURE_KEY = 'player-drone';
 const PLAYER_DRONE_DISPLAY_HEIGHT = 42;
+const DRONE_SHADOW = {
+    x: -10,
+    y: 70,
+    width: 38,
+    height: 16,
+    alpha: 0.24
+};
 
 type DroneStats = {
     damage: number;
@@ -36,6 +43,15 @@ export class Drone {
         this.container.setDepth(30);
         this.container.setScale(DRONE.scale);
 
+        const shadow = scene.add.ellipse(
+            DRONE_SHADOW.x,
+            DRONE_SHADOW.y,
+            DRONE_SHADOW.width,
+            DRONE_SHADOW.height,
+            0x050505,
+            DRONE_SHADOW.alpha
+        );
+
         const droneImage = scene.add.image(0, 0, PLAYER_DRONE_TEXTURE_KEY);
         droneImage.setDisplaySize(
             PLAYER_DRONE_DISPLAY_HEIGHT * (droneImage.width / droneImage.height),
@@ -43,7 +59,7 @@ export class Drone {
         );
         droneImage.setOrigin(0.5);
 
-        this.container.add(droneImage);
+        this.container.add([shadow, droneImage]);
     }
 
     update(deltaSeconds: number, enemies: Enemy[]) {
