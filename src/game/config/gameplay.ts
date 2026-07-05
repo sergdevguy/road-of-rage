@@ -30,7 +30,7 @@ export const COMBAT = {
     droneRange: 270,
     droneFireDelay: 680,
     droneDamage: 35,
-    projectileSpeed: 620
+    projectileSpeed: 920
 };
 
 export const ENEMY = {

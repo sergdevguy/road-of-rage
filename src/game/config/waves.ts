@@ -1,4 +1,4 @@
-import type { EnemyType } from './enemies';
+import type { EnemyType } from './enemies'
 
 export type WaveType =
     | 'chase'
@@ -51,10 +51,10 @@ export const WAVE_TYPE_DEFINITIONS: Record<WaveType, WaveTypeDefinition> = {
     airAttack: {
         type: 'airAttack',
         enemyWeights: {
-            drone: 85,
-            fastCar: 15
+            drone: 90,
+            fastCar: 10
         },
-        spawnIntervalMultiplier: 0.9,
+        spawnIntervalMultiplier: 0.4,
         budgetMultiplier: 1
     }
 };
