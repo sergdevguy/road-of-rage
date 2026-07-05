@@ -3,7 +3,13 @@ import { GAME_HEIGHT, GAME_WIDTH, WORLD } from '../config/gameplay'
 
 export const WORLD_TEXTURE_KEYS = {
     sand: 'world-texture-sand',
-    road: 'world-texture-road'
+    road: 'world-texture-road',
+    grass1: 'world-decor-grass-1',
+    grass2: 'world-decor-grass-2',
+    stone1: 'world-decor-stone-1',
+    stone2: 'world-decor-stone-2',
+    barrel1: 'world-decor-barrel-1',
+    sign: 'world-decor-sign'
 };
 
 const ROAD_TEXTURE_SOURCE_HEIGHT = 608;
@@ -11,18 +17,32 @@ const ROAD_TEXTURE_DISPLAY_HEIGHT = WORLD.roadHeight;
 const SAND_TILE_SCALE = 0.4;
 const ROAD_TILE_SCALE = 0.3;
 const ROAD_TILE_SCALE_Y = ROAD_TEXTURE_DISPLAY_HEIGHT / ROAD_TEXTURE_SOURCE_HEIGHT;
+const ROAD_DECOR_PADDING = 34;
+
+type DecorZone = {
+    minY: number;
+    maxY: number;
+};
+
+const FIELD_DECOR_ZONES: DecorZone[] = [
+    { minY: 54, maxY: WORLD.roadY - WORLD.roadHeight / 2 - ROAD_DECOR_PADDING },
+    { minY: WORLD.roadY + WORLD.roadHeight / 2 + ROAD_DECOR_PADDING, maxY: GAME_HEIGHT - 22 }
+];
+
+const EDGE_DECOR_ZONES: DecorZone[] = [
+    { minY: 70, maxY: 210 },
+    { minY: GAME_HEIGHT - 175, maxY: GAME_HEIGHT - 42 }
+];
 
 type Scenery = {
     x: number;
     y: number;
-    size: number;
-    kind: 'rock' | 'tree' | 'scrub';
+    image: Phaser.GameObjects.Image;
 };
 
 export class WorldRenderer {
     private readonly sand: Phaser.GameObjects.TileSprite;
     private readonly road: Phaser.GameObjects.TileSprite;
-    private readonly sceneryGraphics: Phaser.GameObjects.Graphics;
     private readonly scenery: Scenery[];
     private scroll = 0;
     private readonly wrapWidth = GAME_WIDTH + 180;
@@ -32,9 +52,6 @@ export class WorldRenderer {
         this.sand.setOrigin(0);
         this.sand.setDepth(0);
         this.sand.setTileScale(SAND_TILE_SCALE);
-
-        this.sceneryGraphics = scene.add.graphics();
-        this.sceneryGraphics.setDepth(1);
 
         this.road = scene.add.tileSprite(
             0,
@@ -47,92 +64,103 @@ export class WorldRenderer {
         this.road.setDepth(2);
         this.road.setTileScale(ROAD_TILE_SCALE, ROAD_TILE_SCALE_Y);
 
-        this.scenery = this.createScenery();
-        this.draw();
+        this.scenery = this.createScenery(scene);
+        this.updateScenery();
     }
 
     update(deltaSeconds: number) {
         this.scroll += WORLD.scrollSpeed * deltaSeconds;
         this.sand.tilePositionX = this.scroll / SAND_TILE_SCALE;
         this.road.tilePositionX = this.scroll / ROAD_TILE_SCALE;
-        this.draw();
+        this.updateScenery();
     }
 
-    private draw() {
-        const g = this.sceneryGraphics;
-        g.clear();
-        this.drawScenery(g);
-    }
-
-    private drawScenery(g: Phaser.GameObjects.Graphics) {
+    private updateScenery() {
         for (const item of this.scenery) {
             const x = this.wrapX(item.x - this.scroll);
-
-            if (Math.abs(item.y - WORLD.roadY) < WORLD.roadHeight * 0.75) {
-                continue;
-            }
-
-            if (item.kind === 'tree') {
-                this.drawTree(g, x, item.y, item.size);
-            } else if (item.kind === 'rock') {
-                this.drawRock(g, x, item.y, item.size);
-            } else {
-                this.drawScrub(g, x, item.y, item.size);
-            }
+            item.image.setX(x);
         }
-    }
-
-    private drawTree(g: Phaser.GameObjects.Graphics, x: number, y: number, size: number) {
-        g.fillStyle(0x151209, 0.32);
-        g.fillEllipse(x + 8, y + size * 0.34, size * 1.25, size * 0.42);
-
-        g.fillStyle(0x2a3219, 1);
-        g.fillCircle(x, y, size * 0.48);
-        g.fillCircle(x - size * 0.33, y + size * 0.12, size * 0.34);
-        g.fillCircle(x + size * 0.26, y + size * 0.18, size * 0.36);
-
-        g.fillStyle(0x4c5724, 0.9);
-        g.fillCircle(x - size * 0.1, y - size * 0.12, size * 0.24);
-    }
-
-    private drawRock(g: Phaser.GameObjects.Graphics, x: number, y: number, size: number) {
-        g.fillStyle(0x17130f, 0.22);
-        g.fillEllipse(x + 3, y + size * 0.25, size * 1.1, size * 0.34);
-
-        g.fillStyle(0x6b6049, 0.85);
-        g.fillTriangle(x - size * 0.45, y + size * 0.2, x, y - size * 0.45, x + size * 0.48, y + size * 0.18);
-        g.fillStyle(0x3d382c, 0.9);
-        g.fillTriangle(x - size * 0.1, y + size * 0.24, x + size * 0.5, y + size * 0.18, x + size * 0.12, y - size * 0.4);
-    }
-
-    private drawScrub(g: Phaser.GameObjects.Graphics, x: number, y: number, size: number) {
-        g.lineStyle(3, 0x2e351b, 0.8);
-        g.lineBetween(x, y, x - size * 0.35, y - size * 0.35);
-        g.lineBetween(x, y, x + size * 0.35, y - size * 0.28);
-        g.lineBetween(x, y, x + size * 0.08, y - size * 0.55);
     }
 
     private wrapX(x: number) {
         return ((x + 90) % this.wrapWidth + this.wrapWidth) % this.wrapWidth - 90;
     }
 
-    private createScenery(): Scenery[] {
-        return [
-            { x: 70, y: 170, size: 58, kind: 'tree' },
-            { x: 210, y: 260, size: 28, kind: 'rock' },
-            { x: 345, y: 145, size: 36, kind: 'rock' },
-            { x: 545, y: 170, size: 66, kind: 'tree' },
-            { x: 815, y: 245, size: 48, kind: 'tree' },
-            { x: 960, y: 178, size: 24, kind: 'scrub' },
-            { x: 1125, y: 206, size: 54, kind: 'tree' },
-            { x: 1240, y: 150, size: 30, kind: 'rock' },
-            { x: 130, y: 650, size: 62, kind: 'tree' },
-            { x: 300, y: 610, size: 24, kind: 'rock' },
-            { x: 585, y: 690, size: 68, kind: 'tree' },
-            { x: 760, y: 590, size: 18, kind: 'scrub' },
-            { x: 905, y: 640, size: 58, kind: 'tree' },
-            { x: 1110, y: 620, size: 24, kind: 'scrub' },
-            { x: 1220, y: 670, size: 56, kind: 'tree' }
-        ];
+    private createScenery(scene: Scene): Scenery[] {
+        const items: Scenery[] = [];
+
+        for (let x = -70; x < this.wrapWidth; x += 46) {
+            const seed = x * 13 + 17;
+            const y = this.randomY(FIELD_DECOR_ZONES, seed);
+            const jitterX = this.randomRange(seed + 3, -18, 18);
+            items.push(this.createDecor(
+                scene,
+                x + jitterX,
+                y,
+                this.pickGrassTexture(seed),
+                this.randomRange(seed + 7, 0.25, 0.38)
+            ));
+        }
+
+        for (let x = -30; x < this.wrapWidth; x += 128) {
+            const seed = x * 19 + 41;
+            const y = this.randomY(FIELD_DECOR_ZONES, seed);
+            const jitterX = this.randomRange(seed + 5, -34, 34);
+            items.push(this.createDecor(
+                scene,
+                x + jitterX,
+                y,
+                this.pickStoneTexture(seed),
+                this.randomRange(seed + 9, 0.38, 0.58)
+            ));
+        }
+
+        for (let x = 140; x < this.wrapWidth; x += 520) {
+            const seed = x * 23 + 83;
+            const y = this.randomY(EDGE_DECOR_ZONES, seed);
+            const jitterX = this.randomRange(seed + 11, -46, 46);
+            items.push(this.createDecor(scene, x + jitterX, y, WORLD_TEXTURE_KEYS.barrel1, 0.42));
+        }
+
+        for (let x = 380; x < this.wrapWidth; x += 920) {
+            const seed = x * 29 + 127;
+            const y = this.randomY(EDGE_DECOR_ZONES, seed);
+            const jitterX = this.randomRange(seed + 13, -52, 52);
+            items.push(this.createDecor(scene, x + jitterX, y, WORLD_TEXTURE_KEYS.sign, 0.36));
+        }
+
+        return items;
+    }
+
+    private createDecor(scene: Scene, x: number, y: number, textureKey: string, scale: number): Scenery {
+        const image = scene.add.image(x, y, textureKey);
+        image.setOrigin(0.5, 0.82);
+        image.setDepth(1);
+        image.setScale(scale);
+
+        return { x, y, image };
+    }
+
+    private pickGrassTexture(seed: number) {
+        return seed % 2 === 0 ? WORLD_TEXTURE_KEYS.grass1 : WORLD_TEXTURE_KEYS.grass2;
+    }
+
+    private pickStoneTexture(seed: number) {
+        return seed % 2 === 0 ? WORLD_TEXTURE_KEYS.stone1 : WORLD_TEXTURE_KEYS.stone2;
+    }
+
+    private randomY(zones: DecorZone[], seed: number) {
+        const zoneIndex = Math.min(Math.floor(this.seededRandom(seed) * zones.length), zones.length - 1);
+        const zone = zones[zoneIndex];
+        return this.randomRange(seed + 101, zone.minY, zone.maxY);
+    }
+
+    private randomRange(seed: number, min: number, max: number) {
+        return min + this.seededRandom(seed) * (max - min);
+    }
+
+    private seededRandom(seed: number) {
+        const value = Math.sin(seed * 12.9898) * 43758.5453;
+        return value - Math.floor(value);
     }
 }

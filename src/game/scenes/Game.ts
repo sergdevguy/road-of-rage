@@ -53,6 +53,12 @@ export class Game extends Scene {
         this.load.image(ENEMY_TEXTURE_KEYS.drone, 'assets/images/enemys/drone.png');
         this.load.image(WORLD_TEXTURE_KEYS.sand, 'assets/images/screens/game/texture-sand.png');
         this.load.image(WORLD_TEXTURE_KEYS.road, 'assets/images/screens/game/texture-road.png');
+        this.load.image(WORLD_TEXTURE_KEYS.grass1, 'assets/images/screens/game/decor-grass-1.png');
+        this.load.image(WORLD_TEXTURE_KEYS.grass2, 'assets/images/screens/game/decor-grass-2.png');
+        this.load.image(WORLD_TEXTURE_KEYS.stone1, 'assets/images/screens/game/decor-stone-1.png');
+        this.load.image(WORLD_TEXTURE_KEYS.stone2, 'assets/images/screens/game/decore-stone-2.png');
+        this.load.image(WORLD_TEXTURE_KEYS.barrel1, 'assets/images/screens/game/decore-barrel-1.png');
+        this.load.image(WORLD_TEXTURE_KEYS.sign, 'assets/images/screens/game/decore-sign.png');
         this.load.spritesheet(EXPLOSION_TEXTURE_KEY, 'assets/images/explosion.png', {
             frameWidth: 64,
             frameHeight: 66
