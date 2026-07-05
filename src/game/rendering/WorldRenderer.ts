@@ -14,8 +14,8 @@ export const WORLD_TEXTURE_KEYS = {
 
 const ROAD_TEXTURE_SOURCE_HEIGHT = 608;
 const ROAD_TEXTURE_DISPLAY_HEIGHT = WORLD.roadHeight;
-const SAND_TILE_SCALE = 0.4;
-const ROAD_TILE_SCALE = 0.3;
+const SAND_TILE_SCALE = 1;
+const ROAD_TILE_SCALE = 1;
 const ROAD_TILE_SCALE_Y = ROAD_TEXTURE_DISPLAY_HEIGHT / ROAD_TEXTURE_SOURCE_HEIGHT;
 const ROAD_DECOR_PADDING = 34;
 
@@ -89,18 +89,19 @@ export class WorldRenderer {
     private createScenery(scene: Scene): Scenery[] {
         const items: Scenery[] = [];
 
-        for (let x = -70; x < this.wrapWidth; x += 46) {
-            const seed = x * 13 + 17;
-            const y = this.randomY(FIELD_DECOR_ZONES, seed);
-            const jitterX = this.randomRange(seed + 3, -18, 18);
-            items.push(this.createDecor(
-                scene,
-                x + jitterX,
-                y,
-                this.pickGrassTexture(seed),
-                this.randomRange(seed + 7, 0.25, 0.38)
-            ));
-        }
+        // Grass flickers too much with the current texture scale; keep it disabled for now.
+        // for (let x = -70; x < this.wrapWidth; x += 46) {
+        //     const seed = x * 13 + 17;
+        //     const y = this.randomY(FIELD_DECOR_ZONES, seed);
+        //     const jitterX = this.randomRange(seed + 3, -18, 18);
+        //     items.push(this.createDecor(
+        //         scene,
+        //         x + jitterX,
+        //         y,
+        //         this.pickGrassTexture(seed),
+        //         this.randomRange(seed + 7, 0.25, 0.38)
+        //     ));
+        // }
 
         for (let x = -30; x < this.wrapWidth; x += 128) {
             const seed = x * 19 + 41;
@@ -141,9 +142,9 @@ export class WorldRenderer {
         return { x, y, image };
     }
 
-    private pickGrassTexture(seed: number) {
-        return seed % 2 === 0 ? WORLD_TEXTURE_KEYS.grass1 : WORLD_TEXTURE_KEYS.grass2;
-    }
+    // private pickGrassTexture(seed: number) {
+    //     return seed % 2 === 0 ? WORLD_TEXTURE_KEYS.grass1 : WORLD_TEXTURE_KEYS.grass2;
+    // }
 
     private pickStoneTexture(seed: number) {
         return seed % 2 === 0 ? WORLD_TEXTURE_KEYS.stone1 : WORLD_TEXTURE_KEYS.stone2;

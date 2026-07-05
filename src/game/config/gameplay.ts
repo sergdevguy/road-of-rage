@@ -9,7 +9,7 @@ export const WORLD = {
 
 export const TRUCK = {
     x: GAME_WIDTH / 2,
-    y: WORLD.roadY,
+    y: WORLD.roadY - 20,
     scale: 0.8,
     maxHp: 10,
     collisionRadius: 61
