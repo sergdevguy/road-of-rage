@@ -12,7 +12,7 @@ export const TRUCK = {
     y: WORLD.roadY - 20,
     scale: 0.8,
     maxHp: 10,
-    collisionRadius: 61
+    collisionRadius: 161
 };
 
 export const DRONE = {
@@ -45,6 +45,10 @@ export const WAVES = {
     basePowerBudget: 50,
     powerBudgetStep: 25,
     maxAlive: 20
+};
+
+export const DEBUG = {
+    showHitboxes: true
 };
 
 export const COLORS = {

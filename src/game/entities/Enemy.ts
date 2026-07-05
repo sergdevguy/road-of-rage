@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser'
 import type { EnemyType } from '../config/enemies'
-import { COLORS, ENEMY, TRUCK } from '../config/gameplay'
+import { COLORS, DEBUG, ENEMY, TRUCK } from '../config/gameplay'
+import { HitboxDebug } from '../debug/HitboxDebug'
 import type { Point, SpawnSide } from '../types'
 import { distanceSquared } from '../utils/math'
 
@@ -73,6 +74,11 @@ export class Enemy {
             shadowConfig.alpha
         );
         this.container.add([shadow, this.visual]);
+
+        if (DEBUG.showHitboxes) {
+            const hitbox = HitboxDebug.createCircle(scene, 0, 0, this.radius, 0xff4f8b);
+            this.container.add(hitbox);
+        }
 
         this.addImageVisual(options.type);
 

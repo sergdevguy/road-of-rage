@@ -1,5 +1,6 @@
 import type { Scene } from 'phaser'
-import { COLORS, TRUCK, WORLD } from '../config/gameplay'
+import { COLORS, DEBUG, TRUCK, WORLD } from '../config/gameplay'
+import { HitboxDebug } from '../debug/HitboxDebug'
 import type { Point } from '../types'
 
 export const TRUCK_TEXTURE_KEY = 'player-truck';
@@ -51,6 +52,11 @@ export class Truck {
         }
 
         this.container.add(this.wheels);
+
+        if (DEBUG.showHitboxes) {
+            const hitbox = HitboxDebug.createCircle(scene, 0, 0, TRUCK.collisionRadius / TRUCK.scale, 0x42d9ff);
+            this.container.add(hitbox);
+        }
 
         const healthBack = scene.add.rectangle(-8, -80, 118, 10, 0x26311f);
         healthBack.setStrokeStyle(2, 0x8da66d, 0.8);
