@@ -7,7 +7,7 @@ import { Enemy, ENEMY_TEXTURE_KEYS } from '../entities/Enemy';
 import { Projectile } from '../entities/Projectile';
 import { Truck, TRUCK_TEXTURE_KEY, TRUCK_WHEEL_TEXTURE_KEY } from '../entities/Truck';
 import { Turret } from '../entities/Turret';
-import { WorldRenderer } from '../rendering/WorldRenderer';
+import { WorldRenderer, WORLD_TEXTURE_KEYS } from '../rendering/WorldRenderer';
 import { EnemySpawner } from '../spawners/EnemySpawner';
 import { BonusManager, type RunUpgradeState } from '../systems/BonusManager';
 import { AudioManager } from '../systems/AudioManager';
@@ -51,6 +51,8 @@ export class Game extends Scene {
         this.load.image(ENEMY_TEXTURE_KEYS.fastCar, 'assets/images/enemys/buggy.png');
         this.load.image(ENEMY_TEXTURE_KEYS.armoredCar, 'assets/images/enemys/kamikadze.png');
         this.load.image(ENEMY_TEXTURE_KEYS.drone, 'assets/images/enemys/drone.png');
+        this.load.image(WORLD_TEXTURE_KEYS.sand, 'assets/images/screens/game/texture-sand.png');
+        this.load.image(WORLD_TEXTURE_KEYS.road, 'assets/images/screens/game/texture-road.png');
         this.load.spritesheet(EXPLOSION_TEXTURE_KEY, 'assets/images/explosion.png', {
             frameWidth: 64,
             frameHeight: 66

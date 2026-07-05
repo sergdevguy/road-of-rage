@@ -1,5 +1,16 @@
-import type { Scene } from 'phaser';
-import { COLORS, GAME_HEIGHT, GAME_WIDTH, WORLD } from '../config/gameplay';
+import type { Scene } from 'phaser'
+import { GAME_HEIGHT, GAME_WIDTH, WORLD } from '../config/gameplay'
+
+export const WORLD_TEXTURE_KEYS = {
+    sand: 'world-texture-sand',
+    road: 'world-texture-road'
+};
+
+const ROAD_TEXTURE_SOURCE_HEIGHT = 608;
+const ROAD_TEXTURE_DISPLAY_HEIGHT = WORLD.roadHeight;
+const SAND_TILE_SCALE = 0.4;
+const ROAD_TILE_SCALE = 0.3;
+const ROAD_TILE_SCALE_Y = ROAD_TEXTURE_DISPLAY_HEIGHT / ROAD_TEXTURE_SOURCE_HEIGHT;
 
 type Scenery = {
     x: number;
@@ -9,50 +20,48 @@ type Scenery = {
 };
 
 export class WorldRenderer {
-    private readonly graphics: Phaser.GameObjects.Graphics;
+    private readonly sand: Phaser.GameObjects.TileSprite;
+    private readonly road: Phaser.GameObjects.TileSprite;
+    private readonly sceneryGraphics: Phaser.GameObjects.Graphics;
     private readonly scenery: Scenery[];
     private scroll = 0;
     private readonly wrapWidth = GAME_WIDTH + 180;
 
     constructor(scene: Scene) {
-        this.graphics = scene.add.graphics();
-        this.graphics.setDepth(0);
+        this.sand = scene.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, WORLD_TEXTURE_KEYS.sand);
+        this.sand.setOrigin(0);
+        this.sand.setDepth(0);
+        this.sand.setTileScale(SAND_TILE_SCALE);
+
+        this.sceneryGraphics = scene.add.graphics();
+        this.sceneryGraphics.setDepth(1);
+
+        this.road = scene.add.tileSprite(
+            0,
+            WORLD.roadY - ROAD_TEXTURE_DISPLAY_HEIGHT / 2,
+            GAME_WIDTH,
+            ROAD_TEXTURE_DISPLAY_HEIGHT,
+            WORLD_TEXTURE_KEYS.road
+        );
+        this.road.setOrigin(0);
+        this.road.setDepth(2);
+        this.road.setTileScale(ROAD_TILE_SCALE, ROAD_TILE_SCALE_Y);
+
         this.scenery = this.createScenery();
         this.draw();
     }
 
     update(deltaSeconds: number) {
         this.scroll += WORLD.scrollSpeed * deltaSeconds;
+        this.sand.tilePositionX = this.scroll / SAND_TILE_SCALE;
+        this.road.tilePositionX = this.scroll / ROAD_TILE_SCALE;
         this.draw();
     }
 
     private draw() {
-        const g = this.graphics;
+        const g = this.sceneryGraphics;
         g.clear();
-
-        g.fillStyle(COLORS.dirt, 1);
-        g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
-        this.drawGroundTexture(g);
         this.drawScenery(g);
-        this.drawRoad(g);
-    }
-
-    private drawGroundTexture(g: Phaser.GameObjects.Graphics) {
-        g.lineStyle(1, 0x5a4a34, 0.22);
-
-        for (let x = -40 - (this.scroll % 82); x < GAME_WIDTH + 80; x += 82) {
-            g.lineBetween(x, 160, x + 38, 138);
-            g.lineBetween(x + 42, 612, x + 74, 584);
-        }
-
-        g.fillStyle(0x211d16, 0.22);
-
-        for (let x = -90 - (this.scroll % 118); x < GAME_WIDTH + 100; x += 118) {
-            g.fillCircle(x, 250 + Math.sin(x) * 18, 3);
-            g.fillCircle(x + 46, 650 + Math.cos(x) * 16, 4);
-            g.fillCircle(x + 84, 340 + Math.sin(x * 0.4) * 28, 2);
-        }
     }
 
     private drawScenery(g: Phaser.GameObjects.Graphics) {
@@ -70,26 +79,6 @@ export class WorldRenderer {
             } else {
                 this.drawScrub(g, x, item.y, item.size);
             }
-        }
-    }
-
-    private drawRoad(g: Phaser.GameObjects.Graphics) {
-        const roadTop = WORLD.roadY - WORLD.roadHeight / 2;
-
-        g.fillStyle(0x171713, 0.48);
-        g.fillRect(0, roadTop + 8, GAME_WIDTH, WORLD.roadHeight);
-
-        g.fillStyle(COLORS.road, 1);
-        g.fillRect(0, roadTop, GAME_WIDTH, WORLD.roadHeight);
-
-        g.lineStyle(3, COLORS.roadEdge, 0.8);
-        g.lineBetween(0, roadTop + 2, GAME_WIDTH, roadTop + 2);
-        g.lineBetween(0, roadTop + WORLD.roadHeight - 2, GAME_WIDTH, roadTop + WORLD.roadHeight - 2);
-
-        g.lineStyle(4, 0xb7ad92, 0.36);
-
-        for (let x = -100 - (this.scroll % 118); x < GAME_WIDTH + 100; x += 118) {
-            g.lineBetween(x, WORLD.roadY, x + 48, WORLD.roadY);
         }
     }
 
