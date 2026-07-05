@@ -1,9 +1,8 @@
 import type { Scene } from 'phaser'
-import type { EnemyType } from '../config/enemies'
+import type { EnemyDefinition, EnemyType } from '../config/enemies'
 import { COLORS, DEBUG, ENEMY, TRUCK } from '../config/gameplay'
 import { HitboxDebug } from '../debug/HitboxDebug'
 import type { Point, SpawnSide } from '../types'
-import { distanceSquared } from '../utils/math'
 
 export const ENEMY_TEXTURE_KEYS: Record<EnemyType, string> = {
     fastCar: 'enemy-buggy',
@@ -31,11 +30,17 @@ type EnemyOptions = {
     speed: number;
     damage: number;
     reward: number;
+    hitbox: EnemyDefinition['hitbox'];
+};
+
+type Rect = {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
 };
 
 export class Enemy {
-    readonly radius = ENEMY.collisionRadius;
-
     private readonly scene: Scene;
     private readonly container: Phaser.GameObjects.Container;
     private readonly visual: Phaser.GameObjects.Container;
@@ -46,6 +51,7 @@ export class Enemy {
     private readonly speed: number;
     private readonly damage: number;
     private readonly rewardValue: number;
+    private readonly hitbox: EnemyDefinition['hitbox'];
     private readonly positionValue: Point;
     private hp: number;
     private attackCooldownMs = 0;
@@ -60,6 +66,7 @@ export class Enemy {
         this.speed = options.speed;
         this.damage = options.damage;
         this.rewardValue = options.reward;
+        this.hitbox = options.hitbox;
         this.positionValue = { ...options.position };
         this.container = scene.add.container(Math.round(options.position.x), Math.round(options.position.y));
         this.container.setDepth(15);
@@ -76,7 +83,14 @@ export class Enemy {
         this.container.add([shadow, this.visual]);
 
         if (DEBUG.showHitboxes) {
-            const hitbox = HitboxDebug.createCircle(scene, 0, 0, this.radius, 0xff4f8b);
+            const hitbox = HitboxDebug.createRect(
+                scene,
+                this.hitbox.offsetX,
+                this.hitbox.offsetY,
+                this.hitbox.width,
+                this.hitbox.height,
+                0xff4f8b
+            );
             this.container.add(hitbox);
         }
 
@@ -117,15 +131,16 @@ export class Enemy {
         }
 
         this.attackCooldownMs -= deltaSeconds * 1000;
-
-        const dx = target.x - this.x;
-        const dy = target.y - this.y;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const attackDistance = TRUCK.collisionRadius + this.radius - 8;
-
         this.updateFacing(target);
 
-        if (dist > attackDistance) {
+        const truckRect = this.truckHitbox(target);
+
+        if (!this.rectsOverlap(this.hitboxRect(), truckRect)) {
+            const contactPoint = this.closestPointOnRect(this.position, truckRect);
+            const dx = contactPoint.x - this.x;
+            const dy = contactPoint.y - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
             this.positionValue.x += (dx / dist) * this.speed * deltaSeconds;
             this.positionValue.y += (dy / dist) * this.speed * deltaSeconds;
             this.syncRenderPosition();
@@ -162,8 +177,11 @@ export class Enemy {
     }
 
     overlaps(point: Point, radius: number) {
-        const maxDistance = this.radius + radius;
-        return distanceSquared(this.position, point) <= maxDistance * maxDistance;
+        const closest = this.closestPointOnRect(point, this.hitboxRect());
+        const dx = point.x - closest.x;
+        const dy = point.y - closest.y;
+
+        return dx * dx + dy * dy <= radius * radius;
     }
 
     destroy() {
@@ -185,6 +203,35 @@ export class Enemy {
 
     private syncRenderPosition() {
         this.container.setPosition(Math.round(this.positionValue.x), Math.round(this.positionValue.y));
+    }
+
+    private hitboxRect(): Rect {
+        return {
+            left: this.x + this.hitbox.offsetX - this.hitbox.width / 2,
+            right: this.x + this.hitbox.offsetX + this.hitbox.width / 2,
+            top: this.y + this.hitbox.offsetY - this.hitbox.height / 2,
+            bottom: this.y + this.hitbox.offsetY + this.hitbox.height / 2
+        };
+    }
+
+    private truckHitbox(target: Point): Rect {
+        return {
+            left: target.x + TRUCK.hitboxOffsetX - TRUCK.hitboxWidth / 2,
+            right: target.x + TRUCK.hitboxOffsetX + TRUCK.hitboxWidth / 2,
+            top: target.y + TRUCK.hitboxOffsetY - TRUCK.hitboxHeight / 2,
+            bottom: target.y + TRUCK.hitboxOffsetY + TRUCK.hitboxHeight / 2
+        };
+    }
+
+    private rectsOverlap(a: Rect, b: Rect) {
+        return a.left <= b.right && a.right >= b.left && a.top <= b.bottom && a.bottom >= b.top;
+    }
+
+    private closestPointOnRect(point: Point, rect: Rect): Point {
+        return {
+            x: Math.max(rect.left, Math.min(point.x, rect.right)),
+            y: Math.max(rect.top, Math.min(point.y, rect.bottom))
+        };
     }
 
     private faceInitialDirection() {

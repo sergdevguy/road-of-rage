@@ -9,5 +9,11 @@ export const HitboxDebug = {
         const circle = scene.add.circle(x, y, radius, color, HITBOX_FILL_ALPHA);
         circle.setStrokeStyle(HITBOX_STROKE_WIDTH, color, HITBOX_STROKE_ALPHA);
         return circle;
+    },
+
+    createRect(scene: Scene, x: number, y: number, width: number, height: number, color: number) {
+        const rect = scene.add.rectangle(x, y, width, height, color, HITBOX_FILL_ALPHA);
+        rect.setStrokeStyle(HITBOX_STROKE_WIDTH, color, HITBOX_STROKE_ALPHA);
+        return rect;
     }
 };

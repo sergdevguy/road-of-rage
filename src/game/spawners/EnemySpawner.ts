@@ -29,7 +29,8 @@ export class EnemySpawner {
             maxHp: Math.ceil(definition.maxHp * options.hpMultiplier),
             speed: definition.speed,
             damage: definition.damage,
-            reward: definition.reward
+            reward: definition.reward,
+            hitbox: definition.hitbox
         });
 
         AudioManager.playSfx(this.scene, this.spawnSoundKey(options.type));

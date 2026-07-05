@@ -12,7 +12,11 @@ export const TRUCK = {
     y: WORLD.roadY - 20,
     scale: 0.8,
     maxHp: 10,
-    collisionRadius: 161
+    collisionRadius: 161,
+    hitboxWidth: 236,
+    hitboxHeight: 66,
+    hitboxOffsetX: 0,
+    hitboxOffsetY: 8
 };
 
 export const DRONE = {

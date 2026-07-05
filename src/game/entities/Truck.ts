@@ -54,7 +54,14 @@ export class Truck {
         this.container.add(this.wheels);
 
         if (DEBUG.showHitboxes) {
-            const hitbox = HitboxDebug.createCircle(scene, 0, 0, TRUCK.collisionRadius / TRUCK.scale, 0x42d9ff);
+            const hitbox = HitboxDebug.createRect(
+                scene,
+                TRUCK.hitboxOffsetX / TRUCK.scale,
+                TRUCK.hitboxOffsetY / TRUCK.scale,
+                TRUCK.hitboxWidth / TRUCK.scale,
+                TRUCK.hitboxHeight / TRUCK.scale,
+                0x42d9ff
+            );
             this.container.add(hitbox);
         }
 
